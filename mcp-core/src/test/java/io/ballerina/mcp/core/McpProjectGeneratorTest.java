@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com)
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package io.ballerina.mcp.core;
+
+import io.ballerina.mcp.core.generator.GeneratorOptions;
+import io.ballerina.mcp.core.generator.McpProjectGenerator;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+/**
+ * Integration tests for {@link McpProjectGenerator} using the petstore sample spec.
+ */
+public class McpProjectGeneratorTest {
+
+    @Test
+    public void testGeneratePetstoreProject() throws Exception {
+        URL resource = getClass().getClassLoader().getResource("specs/petstore.yaml");
+        Assert.assertNotNull(resource, "petstore.yaml test resource not found");
+
+        Path inputPath = Paths.get(resource.toURI());
+        Path outputPath = Files.createTempDirectory("mcp-gen-test-");
+
+        GeneratorOptions options = new GeneratorOptions(inputPath, outputPath, "openapi");
+        McpProjectGenerator generator = new McpProjectGenerator(options);
+        generator.generate();
+
+        Path projectDir = outputPath.resolve("petstore_mcp");
+
+        // Verify all expected files are generated
+        Assert.assertTrue(Files.exists(projectDir.resolve("main.bal")),
+                "main.bal should be generated");
+        Assert.assertTrue(Files.exists(projectDir.resolve("types.bal")),
+                "types.bal should be generated");
+        Assert.assertTrue(Files.exists(projectDir.resolve("Ballerina.toml")),
+                "Ballerina.toml should be generated");
+        Assert.assertTrue(Files.exists(projectDir.resolve("README.md")),
+                "README.md should be generated");
+
+        // Verify main.bal content
+        String mainBal = Files.readString(projectDir.resolve("main.bal"));
+        Assert.assertTrue(mainBal.contains("import ballerina/mcp;"), "Should import mcp");
+        Assert.assertTrue(mainBal.contains("import ballerina/http;"), "Should import http");
+        Assert.assertTrue(mainBal.contains("import ballerina/log;"), "Should import log");
+        Assert.assertTrue(mainBal.contains("mcp:Listener mcpListener"), "Should declare mcp listener");
+        Assert.assertTrue(mainBal.contains("@mcp:ServiceConfig"), "Should have service config");
+        Assert.assertTrue(mainBal.contains("service mcp:Service"), "Should declare mcp service");
+        Assert.assertTrue(mainBal.contains("remote function listPets"), "Should generate listPets function");
+        Assert.assertTrue(mainBal.contains("remote function createPet"), "Should generate createPet function");
+        Assert.assertTrue(mainBal.contains("remote function showPetById"), "Should generate showPetById function");
+        Assert.assertTrue(mainBal.contains("remote function deletePet"), "Should generate deletePet function");
+        Assert.assertTrue(mainBal.contains("@mcp:Tool"), "Should annotate functions with @mcp:Tool");
+        Assert.assertTrue(mainBal.contains("https://petstore.example.com/v1"), "Should use correct base URL");
+
+        // Verify types.bal content
+        String typesBal = Files.readString(projectDir.resolve("types.bal"));
+        Assert.assertTrue(typesBal.contains("import ballerina/data.jsondata;"), "Should import jsondata");
+        Assert.assertTrue(typesBal.contains("type Pet record {|"), "Should generate Pet record");
+        Assert.assertTrue(typesBal.contains("type NewPet record {|"), "Should generate NewPet record");
+        Assert.assertTrue(typesBal.contains("int id;"), "id should be required (no ?)");
+        Assert.assertTrue(typesBal.contains("string name;"), "name should be required (no ?)");
+        Assert.assertTrue(typesBal.contains("int age?;"), "age should be optional");
+
+        // Verify Ballerina.toml content
+        String toml = Files.readString(projectDir.resolve("Ballerina.toml"));
+        Assert.assertTrue(toml.contains("[package]"), "Should have [package] section");
+        Assert.assertTrue(toml.contains("name = \"petstore_mcp\""), "Should have correct package name");
+        Assert.assertTrue(toml.contains("ballerina/mcp"), "Should declare mcp dependency");
+
+        // Verify README.md content
+        String readme = Files.readString(projectDir.resolve("README.md"));
+        Assert.assertTrue(readme.contains("Petstore"), "README should mention API title");
+        Assert.assertTrue(readme.contains("listPets"), "README should list tool functions");
+    }
+
+    @Test
+    public void testDerivePackageName() {
+        Assert.assertEquals(McpProjectGenerator.derivePackageName("Petstore"), "petstore_mcp");
+        Assert.assertEquals(McpProjectGenerator.derivePackageName("My REST API"), "my_rest_api_mcp");
+        Assert.assertEquals(McpProjectGenerator.derivePackageName(""), "mcp_server");
+        Assert.assertEquals(McpProjectGenerator.derivePackageName(null), "mcp_server");
+        Assert.assertEquals(McpProjectGenerator.derivePackageName("123 API"), "_123_api_mcp");
+    }
+}
