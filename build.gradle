@@ -15,50 +15,51 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 plugins {
-    id 'java'
-    id 'com.github.spotbugs' version '6.0.18' apply false
+    id "com.github.spotbugs-base" version "${spotbugsPluginVersion}"
+    id "com.github.johnrengelman.shadow" version "${shadowJarPluginVersion}"
 }
 
 allprojects {
-    group = 'io.ballerina'
-    version = '0.1.0-SNAPSHOT'
+    group = project.group
+    version = project.version
+    apply plugin: 'maven-publish'
 
     repositories {
         mavenLocal()
         mavenCentral()
         maven {
-            url = 'https://maven.pkg.github.com/ballerina-platform/ballerina-lang'
-            credentials {
-                username = System.getenv("packageUser")
-                password = System.getenv("packagePAT")
-            }
+            url = 'https://repo.maven.apache.org/maven2'
         }
         maven {
-            url = 'https://maven.pkg.github.com/ballerina-platform/ballerina-distribution'
+            url = 'https://maven.pkg.github.com/ballerina-platform/*'
             credentials {
-                username = System.getenv("packageUser")
-                password = System.getenv("packagePAT")
+                username System.getenv("packageUser")
+                password System.getenv("packagePAT")
             }
         }
+    }
+
+    ext {
+        snapshotVersion = '-SNAPSHOT'
+        timestampedVersionRegex = '.*-\\d{8}-\\d{6}-\\w.*\$'
     }
 }
 
 subprojects {
-    apply plugin: 'java'
-
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+    configurations {
+        jbalTools
+        ballerinaStdLibs
     }
-
     dependencies {
-        testImplementation 'org.testng:testng:7.9.0'
-        testImplementation 'org.mockito:mockito-core:5.11.0'
+        jbalTools("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
+            transitive = false
+        }
     }
+}
 
-    test {
-        useTestNG()
-    }
+tasks.register('build') {
+    dependsOn(":mcp-cli:build")
+    dependsOn(":mcp-core:build")
+    dependsOn(":module-ballerina-mcp:build")
 }

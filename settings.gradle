@@ -15,8 +15,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+pluginManagement {
+    plugins {
+        id "com.github.spotbugs" version "${spotbugsPluginVersion}"
+        id "com.github.johnrengelman.shadow" version "${shadowJarPluginVersion}"
+        id "io.ballerina.plugin" version "${ballerinaGradlePluginVersion}"
+    }
+    repositories {
+        gradlePluginPortal()
+        maven {
+            url = 'https://maven.pkg.github.com/ballerina-platform/*'
+            credentials {
+                username System.getenv("packageUser")
+                password System.getenv("packagePAT")
+            }
+        }
+    }
+}
 
 rootProject.name = 'mcp-tools'
 
-include ':mcp-core'
+include ':module-ballerina-mcp'
 include ':mcp-cli'
+include ':mcp-core'
+
+project(':module-ballerina-mcp').projectDir = file('module-ballerina-mcp')
+project(':mcp-cli').projectDir = file('mcp-cli')
+project(':mcp-core').projectDir = file('mcp-core')

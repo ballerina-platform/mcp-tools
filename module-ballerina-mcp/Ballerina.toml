@@ -1,0 +1,12 @@
+[package]
+distribution = "2201.13.1"
+org = "ballerina"
+name = "mcptool"
+version = "0.1.0"
+authors = ["Ballerina"]
+keywords = ["mcp", "openapi", "mcp-tool"]
+repository = "https://github.com/ballerina-platform/mcp-tools"
+license = ["Apache-2.0"]
+
+[build-options]
+observabilityIncluded = false
