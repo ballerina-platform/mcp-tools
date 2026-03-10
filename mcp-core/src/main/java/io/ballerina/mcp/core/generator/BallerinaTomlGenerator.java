@@ -44,11 +44,8 @@ public class BallerinaTomlGenerator {
         sb.append("version = \"").append(version).append("\"").append(NL);
         sb.append("distribution = \"2201.13.1\"").append(NL);
         sb.append(NL);
-        sb.append("[dependencies]").append(NL);
-        sb.append("ballerina/mcp = \"*\"").append(NL);
-        sb.append("ballerina/http = \"*\"").append(NL);
-        sb.append("ballerina/log = \"*\"").append(NL);
-        sb.append("ballerina/data.jsondata = \"*\"").append(NL);
+        sb.append("[build-options]").append(NL);
+        sb.append("observabilityIncluded = true").append(NL);
 
         return sb.toString();
     }

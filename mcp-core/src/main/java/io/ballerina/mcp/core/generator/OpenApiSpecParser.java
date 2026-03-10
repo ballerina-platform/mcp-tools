@@ -68,7 +68,6 @@ public class OpenApiSpecParser {
     public SpecInfo parse(Path specPath) throws McpGenerationException {
         ParseOptions parseOptions = new ParseOptions();
         parseOptions.setResolve(true);
-        parseOptions.setResolveFully(true);
 
         SwaggerParseResult result = new OpenAPIV3Parser()
                 .readLocation(specPath.toString(), null, parseOptions);
@@ -132,17 +131,19 @@ public class OpenApiSpecParser {
             String path = pathEntry.getKey();
             PathItem pathItem = pathEntry.getValue();
 
-            addEndpointIfPresent(endpoints, path, "get", pathItem.getGet());
-            addEndpointIfPresent(endpoints, path, "post", pathItem.getPost());
-            addEndpointIfPresent(endpoints, path, "put", pathItem.getPut());
-            addEndpointIfPresent(endpoints, path, "delete", pathItem.getDelete());
-            addEndpointIfPresent(endpoints, path, "patch", pathItem.getPatch());
+            addEndpointIfPresent(endpoints, path, "get",    pathItem.getGet(),    pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, "post",   pathItem.getPost(),   pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, "put",    pathItem.getPut(),    pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, "delete", pathItem.getDelete(), pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, "patch",  pathItem.getPatch(),  pathItem, openAPI);
         }
         return endpoints;
     }
 
+    
+
     private void addEndpointIfPresent(List<EndpointInfo> endpoints,
-                                       String path, String method, Operation operation) {
+                                       String path, String method, Operation operation, PathItem pathItem, OpenAPI openAPI) {
         if (operation == null) {
             return;
         }
@@ -150,25 +151,40 @@ public class OpenApiSpecParser {
         // Tool / function name
         String toolName;
         if (operation.getOperationId() != null && !operation.getOperationId().isBlank()) {
-            toolName = operation.getOperationId().replaceAll("[^a-zA-Z0-9_]", "");
+            toolName = sanitizeOperationId(operation.getOperationId());
         } else {
             toolName = NameSanitizer.buildToolName(method, path);
         }
 
         // Description
-        String description = operation.getDescription() != null ? operation.getDescription()
-                : operation.getSummary() != null ? operation.getSummary()
-                : "Executes " + method.toUpperCase() + " on " + path;
+        String description = operation.getSummary() != null ? operation.getSummary()
+            : operation.getDescription() != null ? operation.getDescription()
+            : "Executes " + method.toUpperCase() + " on " + path;
 
-        // Path parameters
-        List<ParameterInfo> parameters = new ArrayList<>();
+        Map<String, Parameter> mergedParams = new LinkedHashMap<>();
+        if (pathItem.getParameters() != null) {
+            for (Parameter param : pathItem.getParameters()) {
+                Parameter resolved = resolveParameter(param, openAPI);
+                if (resolved != null) {
+                    mergedParams.put(resolved.getIn() + ":" + resolved.getName(), resolved);
+                }
+            }
+        }
         if (operation.getParameters() != null) {
             for (Parameter param : operation.getParameters()) {
-                if ("path".equals(param.getIn())) {
-                    String balType = schemaToBalType(param.getSchema());
-                    String safeName = NameSanitizer.safeIdent(param.getName());
-                    parameters.add(new ParameterInfo(param.getName(), safeName, balType, "path"));
+                Parameter resolved = resolveParameter(param, openAPI);
+                if (resolved != null) {
+                    mergedParams.put(resolved.getIn() + ":" + resolved.getName(), resolved);
                 }
+            }
+        }
+
+        List<ParameterInfo> parameters = new ArrayList<>();
+        for (Parameter param : mergedParams.values()) {
+            if ("path".equals(param.getIn())) {
+                String balType = schemaToBalType(param.getSchema());
+                String safeName = NameSanitizer.safeIdent(param.getName());
+                parameters.add(new ParameterInfo(param.getName(), safeName, balType, "path"));
             }
         }
 
@@ -178,15 +194,41 @@ public class OpenApiSpecParser {
             bodyType = extractRequestBodyType(operation.getRequestBody());
         }
 
-        // Return type from first 2xx response
         String returnType = extractReturnType(operation);
 
-        // Build the Ballerina path (replace {param} with ${param} for string templates)
-        String balPath = buildBalPath(path);
+        String balPath = buildBalPath(path, parameters);
 
         endpoints.add(new EndpointInfo(
                 path, balPath, method, toolName, description,
                 parameters, bodyType, returnType));
+    }
+
+    private String sanitizeOperationId(String operationId) {
+        String[] parts = operationId.split("[^a-zA-Z0-9]+");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i].isEmpty()) continue;
+            if (i == 0) {
+                sb.append(parts[i]);
+            } else {
+                sb.append(Character.toUpperCase(parts[i].charAt(0)));
+                sb.append(parts[i].substring(1));
+            }
+        }
+        return sb.toString();
+    }
+
+    private Parameter resolveParameter(Parameter param, OpenAPI openAPI) {
+            if (param.get$ref() == null) {
+                return param;
+            }
+            String ref = param.get$ref();
+            String name = ref.substring(ref.lastIndexOf('/') + 1);
+            if (openAPI.getComponents() != null
+                    && openAPI.getComponents().getParameters() != null) {
+                return openAPI.getComponents().getParameters().get(name);
+            }
+            return null;
     }
 
     private String extractRequestBodyType(RequestBody requestBody) {
@@ -222,17 +264,20 @@ public class OpenApiSpecParser {
         return "json";
     }
 
-    private String buildBalPath(String path) {
+    private String buildBalPath(String path, List<ParameterInfo> parameters) {
+        Map<String, String> nameToSafe = new LinkedHashMap<>();
+        for (ParameterInfo p : parameters) {
+            nameToSafe.put(p.getOriginalName(), p.getSafeName());
+        }
         String[] segments = path.split("/");
         StringBuilder sb = new StringBuilder();
         for (String segment : segments) {
-            if (segment.isEmpty()) {
-                continue;
-            }
+            if (segment.isEmpty()) continue;
             sb.append("/");
             if (segment.startsWith("{") && segment.endsWith("}")) {
                 String paramName = segment.substring(1, segment.length() - 1);
-                sb.append("${").append(paramName).append("}");
+                String safeName = nameToSafe.getOrDefault(paramName, paramName);
+                sb.append("${").append(safeName).append("}");
             } else {
                 sb.append(segment);
             }
@@ -299,18 +344,24 @@ public class OpenApiSpecParser {
         // $ref
         if (schema.get$ref() != null) {
             String ref = schema.get$ref();
-            // Extract the last segment: #/components/schemas/Pet → Pet
             String typeName = ref.substring(ref.lastIndexOf('/') + 1);
             return NameSanitizer.sanitizeTypeName(typeName);
         }
+
+        String type = schema.getType();
+        if (type == null && schema.getTypes() != null && !schema.getTypes().isEmpty()) {
+            type = schema.getTypes().iterator().next();
+        }
+
         // Array type
-        if ("array".equals(schema.getType())) {
+        if ("array".equals(type)) {
             if (schema.getItems() != null) {
                 return schemaToBalType(schema.getItems()) + "[]";
             }
             return "json[]";
         }
-        return switch (schema.getType() == null ? "" : schema.getType()) {
+
+        return switch (type == null ? "" : type) {
             case "integer" -> "int";
             case "string" -> "string";
             case "boolean" -> "boolean";

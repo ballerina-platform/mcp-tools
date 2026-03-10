@@ -61,11 +61,6 @@ public class TypesBalGenerator {
     // -----------------------------------------------------------------------
 
     private void appendRecord(StringBuilder sb, SchemaInfo schema) {
-        // Type-level @jsondata:Name annotation if name was sanitized
-        if (schema.isNeedsTypeAnnotation()) {
-            sb.append("@jsondata:Name {value: \"").append(schema.getOriginalName()).append("\"}").append(NL);
-        }
-
         sb.append("type ").append(schema.getBalName()).append(" record {|").append(NL);
 
         for (SchemaInfo.FieldInfo field : schema.getFields()) {

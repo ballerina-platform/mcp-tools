@@ -130,6 +130,10 @@ public class MainBalGenerator {
 
         if (endpoint.hasBody()) {
             sb.append(", payload");
+        } else if (endpoint.getMethod().equals("post")
+                || endpoint.getMethod().equals("put")
+                || endpoint.getMethod().equals("patch")) {
+            sb.append(", {}");
         }
 
         sb.append(");").append(NL);

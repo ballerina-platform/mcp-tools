@@ -42,17 +42,17 @@ public final class BallerinaKeywords {
             "fail", "false", "final", "float", "flush", "fork", "function", "future",
             "handle", "if", "import", "in", "int", "intersection", "isolated",
             "join", "json",
-            "listener", "lock",
+            "limit", "listener", "lock",
             "map", "match", "module",
             "never", "new", "null",
-            "object", "on",
+            "object", "on", "order",
             "panic", "parameterized", "public",
             "readonly", "record", "remote", "resource", "retry", "return", "rollback",
-            "service", "stream", "string",
+            "select", "service", "source", "start", "stream", "string",
             "table", "transaction", "transactional", "trap", "true", "type", "typedesc",
             "union",
             "var", "version",
-            "while", "worker",
+            "wait", "where", "while", "worker",
             "xml"
     );
 }
