@@ -112,6 +112,12 @@ public class OpenApiSpecParser {
                     }
                 }
             }
+            // Fall back to default
+            if (url.contains("{") && url.contains("}")) {
+                System.err.println("[Warning] Unresolved server variable(s) in URL: " + url
+                        + ". Falling back to " + DEFAULT_BASE_URL);
+                return DEFAULT_BASE_URL;
+            }
             return url;
         }
         return DEFAULT_BASE_URL;
