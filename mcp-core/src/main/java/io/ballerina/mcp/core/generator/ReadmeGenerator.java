@@ -77,7 +77,7 @@ public class ReadmeGenerator {
             sb.append("| `").append(endpoint.getToolName()).append("` | ")
                     .append(endpoint.getMethod().toUpperCase()).append(" | `")
                     .append(endpoint.getPath()).append("` | ")
-                    .append(endpoint.getDescription().replace("|", "\\|")).append(" |").append(NL);
+                    .append(endpoint.getDescription() != null ? endpoint.getDescription().replace("|", "\\|") : "").append(" |").append(NL);
         }
         sb.append(NL);
 

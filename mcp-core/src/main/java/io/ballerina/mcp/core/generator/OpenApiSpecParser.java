@@ -151,7 +151,7 @@ public class OpenApiSpecParser {
         // Tool / function name
         String toolName;
         if (operation.getOperationId() != null && !operation.getOperationId().isBlank()) {
-            toolName = sanitizeOperationId(operation.getOperationId());
+            toolName = sanitizeOperationId(operation.getOperationId(), method, path);
         } else {
             toolName = NameSanitizer.buildToolName(method, path);
         }
@@ -203,7 +203,7 @@ public class OpenApiSpecParser {
                 parameters, bodyType, returnType));
     }
 
-    private String sanitizeOperationId(String operationId) {
+    private String sanitizeOperationId(String operationId, String method, String path) {
         String[] parts = operationId.split("[^a-zA-Z0-9]+");
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < parts.length; i++) {
@@ -215,7 +215,8 @@ public class OpenApiSpecParser {
                 sb.append(parts[i].substring(1));
             }
         }
-        return sb.toString();
+        String result = sb.toString();
+        return result.isEmpty() ? NameSanitizer.buildToolName(method, path) : result;
     }
 
     private Parameter resolveParameter(Parameter param, OpenAPI openAPI) {

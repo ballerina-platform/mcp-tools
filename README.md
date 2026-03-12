@@ -25,7 +25,7 @@ bal mcp -i ./petstore.yaml -o ./output --input-type openapi
 
 ### Generated Project Structure
 
-```
+```text
 petstore_mcp/
 ├── Ballerina.toml    # Project configuration
 ├── main.bal          # MCP service with remote functions per API endpoint
@@ -35,10 +35,11 @@ petstore_mcp/
 
 ## Modules
 
-| Module     | Description                                   |
-| ---------- | --------------------------------------------- |
-| `mcp-core` | Core parsing and code generation logic        |
-| `mcp-cli`  | Ballerina CLI integration (`bal mcp` command) |
+| Module                 | Description                                    |
+| ---------------------- | ---------------------------------------------- |
+| `mcp-core`             | Core parsing and code generation logic         |
+| `mcp-cli`              | Ballerina CLI integration (`bal mcp` command)  |
+| `module-ballerina-mcp` | Distributable Ballerina tool package (`.bala`) |
 
 ## Building
 
