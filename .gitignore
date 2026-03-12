@@ -42,3 +42,4 @@ Thumbs.db
 # Ballerina
 target/
 .ballerina/
+module-ballerina-mcp/libs/

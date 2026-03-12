@@ -60,6 +60,14 @@ task updateTomlFiles {
     }
 }
 
+task copyJars(type: Copy) {
+    dependsOn ":mcp-cli:build"
+    dependsOn ":mcp-core:build"
+    from "${project.rootDir}/mcp-cli/build/libs/mcp-cli-${project.version}.jar"
+    from "${project.rootDir}/mcp-core/build/libs/mcp-core-${project.version}.jar"
+    into "${project.projectDir}/libs"
+}
+
 task commitTomlFiles {
     doLast {
         // placeholder - no git commit needed for local development
@@ -84,6 +92,7 @@ publishing {
     }
 }
 
+updateTomlFiles.dependsOn copyJars
 updateTomlFiles.dependsOn copyStdlibs
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":mcp-cli:build"

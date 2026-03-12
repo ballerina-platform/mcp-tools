@@ -2,7 +2,7 @@
 id = "mcp"
 
 [[dependency]]
-path = "../mcp-cli/build/libs/mcp-cli-0.1.0-SNAPSHOT.jar"
+path = "libs/mcp-cli-0.1.0-SNAPSHOT.jar"
 
 [[dependency]]
-path = "../mcp-core/build/libs/mcp-core-0.1.0-SNAPSHOT.jar"
+path = "libs/mcp-core-0.1.0-SNAPSHOT.jar"
