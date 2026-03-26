@@ -104,6 +104,7 @@ publishing {
 
 createArtifactZip.dependsOn updateTomlFiles
 updateTomlFiles.dependsOn copyJars
+updateTomlFiles.dependsOn copyStdlibs
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":mcp-cli:build"
 test.dependsOn ":mcp-cli:build"
