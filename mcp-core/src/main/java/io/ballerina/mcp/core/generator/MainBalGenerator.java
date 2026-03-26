@@ -75,7 +75,7 @@ public class MainBalGenerator {
         if (port > 0) {
             sb.append("listener mcp:Listener mcpListener = check new (").append(port).append(");").append(NL);
         } else {
-            sb.append("listener mcp:Listener mcpListener = new (9090);").append(NL);
+            sb.append("listener mcp:Listener mcpListener = check new (9090);").append(NL);
         }
         sb.append(NL);
     }
