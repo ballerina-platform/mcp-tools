@@ -70,7 +70,17 @@ task copyJars(type: Copy) {
 
 task commitTomlFiles {
     doLast {
-        // placeholder - no git commit needed for local development
+        if (System.getenv("CI") == null) {
+            return
+        }
+        project.exec {
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git commit -m \"[Automated] Update the Ballerina.toml files\" ${ballerinaTomlFile} ${balToolTomlFile}"
+            } else {
+                commandLine 'sh', '-c', "git commit -m \"[Automated] Update the Ballerina.toml files\" ${ballerinaTomlFile} ${balToolTomlFile}"
+            }
+        }
     }
 }
 
