@@ -16,8 +16,8 @@
  * under the License.
  */
 plugins {
-    id "com.github.spotbugs-base" version "${spotbugsPluginVersion}"
-    id "com.github.johnrengelman.shadow" version "${shadowJarPluginVersion}"
+    id "com.github.spotbugs-base"
+    id "com.github.johnrengelman.shadow"
 }
 
 allprojects {
