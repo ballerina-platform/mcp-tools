@@ -23,7 +23,7 @@ plugins {
 
 description = 'Ballerina - MCP Tool'
 
-def packageName = "mcptool"
+def packageName = "tool_mcp"
 def packageOrg = "ballerina"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
 def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/Ballerina.toml")

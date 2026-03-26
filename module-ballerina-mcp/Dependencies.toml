@@ -5,13 +5,13 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.13.1"
+distribution-version = "2201.12.0"
 
 [[package]]
 org = "ballerina"
-name = "mcptool"
+name = "tool_mcp"
 version = "0.1.0"
 modules = [
-	{org = "ballerina", packageName = "mcptool", moduleName = "mcptool"}
+	{org = "ballerina", packageName = "tool_mcp", moduleName = "tool_mcp"}
 ]
 

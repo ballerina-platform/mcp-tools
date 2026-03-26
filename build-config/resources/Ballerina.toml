@@ -1,14 +1,10 @@
-# AUTO-GENERATED FILE. DO NOT MODIFY.
-
 [package]
-distribution = "2201.13.1"
+distribution = "2201.12.0"
 org = "ballerina"
-name = "mcptool"
+name = "tool_mcp"
 version = "@toml.version@"
 authors = ["Ballerina"]
 keywords = ["mcp", "openapi", "mcp-tool"]
 repository = "https://github.com/ballerina-platform/mcp-tools"
 license = ["Apache-2.0"]
 
-[build-options]
-observabilityIncluded = false
