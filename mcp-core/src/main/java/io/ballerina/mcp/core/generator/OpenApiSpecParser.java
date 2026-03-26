@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Parses an OpenAPI 3.x or Swagger 2.0 specification and returns a {@link SpecInfo}
@@ -370,7 +371,20 @@ public class OpenApiSpecParser {
 
         String type = schema.getType();
         if (type == null && schema.getTypes() != null && !schema.getTypes().isEmpty()) {
-            type = schema.getTypes().iterator().next();
+            Set<String> types = schema.getTypes();
+            if (types.contains("integer")) {
+                type = "integer";
+            } else if (types.contains("number")) {
+                type = "number";
+            } else if (types.contains("boolean")) {
+                type = "boolean";
+            } else if (types.contains("string")) {
+                type = "string";
+            } else if (types.contains("array")) {
+                type = "array";
+            } else {
+                type = types.iterator().next(); 
+            }
         }
 
         // Array type
