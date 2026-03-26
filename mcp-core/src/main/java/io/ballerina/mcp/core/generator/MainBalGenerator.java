@@ -54,7 +54,7 @@ public class MainBalGenerator {
         StringBuilder sb = new StringBuilder();
 
         appendImports(sb);
-        appendClientAndListener(sb, spec.getBaseUrl());
+        appendClientAndListener(sb, spec.getBaseUrl(), spec.getPort());
         appendServiceConfig(sb, spec.getTitle(), spec.getVersion());
         appendServiceBlock(sb, spec);
 
@@ -70,9 +70,13 @@ public class MainBalGenerator {
         sb.append(NL);
     }
 
-    private void appendClientAndListener(StringBuilder sb, String baseUrl) {
+    private void appendClientAndListener(StringBuilder sb, String baseUrl, int port) {
         sb.append("http:Client apiClient = check new (\"").append(baseUrl).append("\");").append(NL);
-        sb.append("listener mcp:Listener mcpListener = check new (9090);").append(NL);
+        if (port > 0) {
+            sb.append("listener mcp:Listener mcpListener = check new (").append(port).append(");").append(NL);
+        } else {
+            sb.append("listener mcp:Listener mcpListener = new (9090);").append(NL);
+        }
         sb.append(NL);
     }
 

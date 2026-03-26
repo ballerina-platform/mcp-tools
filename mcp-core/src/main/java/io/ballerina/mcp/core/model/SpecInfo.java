@@ -28,14 +28,16 @@ import java.util.Map;
 public final class SpecInfo {
 
     private final String baseUrl;
+    private final int port;
     private final String title;
     private final String version;
     private final List<EndpointInfo> endpoints;
     private final Map<String, SchemaInfo> schemas;
 
-    public SpecInfo(String baseUrl, String title, String version,
-                    List<EndpointInfo> endpoints, Map<String, SchemaInfo> schemas) {
+    public SpecInfo(String baseUrl, int port, String title, String version,
+                List<EndpointInfo> endpoints, Map<String, SchemaInfo> schemas) {
         this.baseUrl = baseUrl;
+        this.port = port;
         this.title = title;
         this.version = version;
         this.endpoints = endpoints;
@@ -43,6 +45,7 @@ public final class SpecInfo {
     }
 
     public String getBaseUrl() { return baseUrl; }
+    public int getPort() { return port; }
     public String getTitle() { return title; }
     public String getVersion() { return version; }
     public List<EndpointInfo> getEndpoints() { return endpoints; }

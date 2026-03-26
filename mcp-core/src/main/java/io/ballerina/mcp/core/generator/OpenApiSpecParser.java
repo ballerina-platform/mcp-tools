@@ -82,13 +82,14 @@ public class OpenApiSpecParser {
         OpenAPI openAPI = result.getOpenAPI();
 
         String baseUrl = extractBaseUrl(openAPI);
+        int port = extractPort(baseUrl);
         String title = openAPI.getInfo() != null ? openAPI.getInfo().getTitle() : "Proxy Service";
         String version = openAPI.getInfo() != null ? openAPI.getInfo().getVersion() : "1.0.0";
 
         List<EndpointInfo> endpoints = extractEndpoints(openAPI);
         Map<String, SchemaInfo> schemas = extractSchemas(openAPI);
 
-        return new SpecInfo(baseUrl, title, version, endpoints, schemas);
+        return new SpecInfo(baseUrl, port, title, version, endpoints, schemas);
     }
 
     // -----------------------------------------------------------------------
@@ -207,6 +208,18 @@ public class OpenApiSpecParser {
         endpoints.add(new EndpointInfo(
                 path, balPath, method, toolName, description,
                 parameters, bodyType, returnType));
+    }
+
+    // -----------------------------------------------------------------------
+    // Port extraction
+    // -----------------------------------------------------------------------
+    private int extractPort(String baseUrl) {
+        try {
+            java.net.URI uri = new java.net.URI(baseUrl);
+            return uri.getPort(); // returns -1 if not defined
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     private String sanitizeOperationId(String operationId, String method, String path) {
