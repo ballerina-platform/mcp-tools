@@ -30,6 +30,9 @@ dependencies {
     // Swagger / OpenAPI parser
     implementation "io.swagger.parser.v3:swagger-parser:${swaggerParserVersion}"
 
+     // Ballerina parser 
+    implementation group: 'org.ballerinalang', name: 'ballerina-parser', version: "${ballerinaLangVersion}"
+
     // Test
     testImplementation "org.testng:testng:${testngVersion}"
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"

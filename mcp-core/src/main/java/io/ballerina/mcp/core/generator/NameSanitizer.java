@@ -55,7 +55,7 @@ public final class NameSanitizer {
         }
 
         // Append _ if it is a reserved keyword
-        if (BallerinaKeywords.KEYWORDS.contains(sanitized)) {
+        if (BallerinaKeywords.isKeyword(sanitized)) {
             sanitized = sanitized + "_";
         }
 
@@ -109,7 +109,7 @@ public final class NameSanitizer {
         }
 
         // Append _ if it is a reserved keyword
-        if (BallerinaKeywords.KEYWORDS.contains(result)) {
+        if (BallerinaKeywords.isKeyword(result)) {
             result = result + "_";
         }
 

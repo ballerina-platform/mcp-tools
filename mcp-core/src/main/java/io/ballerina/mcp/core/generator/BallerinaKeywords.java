@@ -18,11 +18,10 @@
 
 package io.ballerina.mcp.core.generator;
 
-import java.util.Set;
+import io.ballerina.compiler.syntax.tree.SyntaxInfo;
 
 /**
- * Ballerina reserved keywords used to sanitize generated identifiers.
- * Matches the keyword list used in the reference generation script.
+ * Utility class for checking Ballerina reserved keywords.
  */
 public final class BallerinaKeywords {
 
@@ -31,28 +30,12 @@ public final class BallerinaKeywords {
     }
 
     /**
-     * Complete set of Ballerina reserved keywords and built-in type names.
+     * Returns true if the given name is a Ballerina reserved keyword.
+     *
+     * @param name the identifier to check
+     * @return true if reserved
      */
-    public static final Set<String> KEYWORDS = Set.of(
-            "annotation", "any", "anydata",
-            "boolean", "break", "byte",
-            "check", "checkpanic", "class", "client", "configurable", "const", "continue",
-            "decimal", "do",
-            "else", "enum", "error", "external",
-            "fail", "false", "final", "float", "flush", "fork", "from", "function", "future",
-            "handle", "if", "import", "in", "int", "is", "isolated",
-            "json",
-            "let", "lock",
-            "map", "match",
-            "never", "new",
-            "object", "on",
-            "panic", "private", "public",
-            "readonly", "resource", "retry", "return", "returns", "rollback",
-            "service", "start", "stream", "string",
-            "table", "transaction", "transactional", "trap", "true", "type", "typedesc",
-            "as",
-            "var",
-            "wait", "while", "worker",
-            "xml"
-    );
+    public static boolean isKeyword(String name) {
+        return SyntaxInfo.isKeyword(name);
+    }
 }
