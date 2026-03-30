@@ -22,6 +22,19 @@ plugins {
 
 description = 'Ballerina MCP Tools - Core Generation Library'
 
+// Extract formatter-core from the jballerina-tools zip so it can be used as a
+task extractFormatterCore(type: Copy) {
+    from {
+        zipTree(configurations.jbalTools.singleFile).matching {
+            include "**/bre/lib/formatter-core-*.jar"
+        }
+    }
+    eachFile { path = name }
+    includeEmptyDirs = false
+    into "${buildDir}/extracted-formatter"
+}
+compileJava.dependsOn extractFormatterCore
+
 dependencies {
     // Jackson for YAML and JSON parsing
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
@@ -30,8 +43,13 @@ dependencies {
     // Swagger / OpenAPI parser
     implementation "io.swagger.parser.v3:swagger-parser:${swaggerParserVersion}"
 
-     // Ballerina parser 
+    // Ballerina parser
     implementation group: 'org.ballerinalang', name: 'ballerina-parser', version: "${ballerinaLangVersion}"
+
+   compileOnly files("${buildDir}/extracted-formatter/formatter-core-${ballerinaLangVersion}.jar")
+
+    // Ballerina OpenAPI core
+    implementation "io.ballerina.openapi:core:${openApiCoreVersion}"
 
     // Test
     testImplementation "org.testng:testng:${testngVersion}"

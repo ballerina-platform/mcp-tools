@@ -23,6 +23,16 @@ plugins {
 
 description = 'Ballerina - MCP Tool'
 
+configurations {
+    openApiCoreDeps {
+        transitive = false
+    }
+}
+
+dependencies {
+    openApiCoreDeps "io.ballerina.openapi:core:${openApiCoreVersion}"
+}
+
 def packageName = "tool_mcp"
 def packageOrg = "ballerina"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
@@ -55,7 +65,9 @@ task updateTomlFiles {
     doLast {
         def newBallerinaToml = ballerinaTomlFilePlaceHolder.text.replace("@toml.version@", tomlVersion)
         ballerinaTomlFile.text = newBallerinaToml
-        def newBalToolToml = balToolTomlFilePlaceHolder.text.replace("@project.version@", project.version)
+        def newBalToolToml = balToolTomlFilePlaceHolder.text
+                .replace("@project.version@", project.version)
+                .replace("@openapi.core.version@", openApiCoreVersion)
         balToolTomlFile.text = newBalToolToml
     }
 }
@@ -65,6 +77,12 @@ task copyJars(type: Copy) {
     dependsOn ":mcp-core:build"
     from "${project.rootDir}/mcp-cli/build/libs/mcp-cli-${project.version}.jar"
     from "${project.rootDir}/mcp-core/build/libs/mcp-core-${project.version}.jar"
+    // Copy the openapi-core jar (without transitive deps) so it is available
+    // on the tool classpath when `bal mcp` runs.
+    from configurations.openApiCoreDeps
+    // Rename core-X.Y.Z.jar → openapi-core-X.Y.Z.jar; other jars are unchanged.
+    // Pattern is anchored (^) so it does not partially match mcp-core-*.jar.
+    rename '^core-(.*)', "openapi-core-\$1"
     into "${project.projectDir}/libs"
 }
 

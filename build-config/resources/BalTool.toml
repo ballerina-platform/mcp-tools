@@ -6,3 +6,6 @@ path = "libs/mcp-cli-@project.version@.jar"
 
 [[dependency]]
 path = "libs/mcp-core-@project.version@.jar"
+
+[[dependency]]
+path = "libs/openapi-core-@openapi.core.version@.jar"

@@ -18,6 +18,8 @@
 
 package io.ballerina.mcp.core.generator;
 
+import io.ballerina.openapi.core.generators.common.GeneratorUtils;
+import io.ballerina.openapi.core.generators.common.exception.UnsupportedOASDataTypeException;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
@@ -32,7 +34,6 @@ import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import io.ballerina.mcp.core.model.EndpointInfo;
 import io.ballerina.mcp.core.model.ParameterInfo;
-import io.ballerina.mcp.core.model.SchemaInfo;
 import io.ballerina.mcp.core.model.SpecInfo;
 
 import java.nio.file.Path;
@@ -43,26 +44,24 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Parses an OpenAPI 3.x or Swagger 2.0 specification and returns a {@link SpecInfo}
- * containing all information needed for Ballerina MCP code generation.
+ * Parses an OpenAPI 3.x specification and returns a {@link SpecInfo} containing all information
+ * needed for Ballerina MCP code generation.
  *
- * <p>Mirrors the logic of the reference shell script:
- * <ul>
- *   <li>Base URL extraction (OAS3 servers[] with variable resolution; Swagger 2.0 schemes+host+basePath)</li>
- *   <li>Path → HTTP method → operation enumeration</li>
- *   <li>Path/body parameter extraction with type mapping</li>
- *   <li>2xx response return-type extraction</li>
- *   <li>Schema (components.schemas / definitions) → record type extraction</li>
- * </ul>
+ * <p>Name sanitization and type mapping delegate to
+ * {@link GeneratorUtils} from the {@code io.ballerina.openapi:core} library so that the
+ * generated identifiers are consistent with the rest of the Ballerina OpenAPI toolchain.
  */
 public class OpenApiSpecParser {
 
     private static final String DEFAULT_BASE_URL = "http://localhost:8080";
 
+    /** The raw OpenAPI model from the last successful {@link #parse(Path)} call. */
+    private OpenAPI parsedOpenAPI;
+
     /**
      * Parses the spec file at the given path and returns a {@link SpecInfo}.
      *
-     * @param specPath path to the OpenAPI/Swagger YAML or JSON file
+     * @param specPath path to the OpenAPI YAML or JSON file
      * @return parsed spec information
      * @throws McpGenerationException if the file cannot be parsed
      */
@@ -81,6 +80,7 @@ public class OpenApiSpecParser {
         }
 
         OpenAPI openAPI = result.getOpenAPI();
+        this.parsedOpenAPI = openAPI;
 
         String baseUrl = extractBaseUrl(openAPI);
         int port = extractPort(baseUrl);
@@ -88,9 +88,17 @@ public class OpenApiSpecParser {
         String version = openAPI.getInfo() != null ? openAPI.getInfo().getVersion() : "1.0.0";
 
         List<EndpointInfo> endpoints = extractEndpoints(openAPI);
-        Map<String, SchemaInfo> schemas = extractSchemas(openAPI);
 
-        return new SpecInfo(baseUrl, port, title, version, endpoints, schemas);
+        return new SpecInfo(baseUrl, port, title, version, endpoints);
+    }
+
+    /**
+     * Returns the raw {@link OpenAPI} model from the last successful {@link #parse(Path)} call.
+     * Intended for use by {@code McpProjectGenerator} to drive type generation via
+     * {@code TypeHandler}.
+     */
+    public OpenAPI getOpenAPI() {
+        return parsedOpenAPI;
     }
 
     // -----------------------------------------------------------------------
@@ -104,7 +112,6 @@ public class OpenApiSpecParser {
             if (url == null || url.isBlank()) {
                 return DEFAULT_BASE_URL;
             }
-            // Resolve server variables with their default values
             if (server.getVariables() != null) {
                 for (Map.Entry<String, ServerVariable> entry : server.getVariables().entrySet()) {
                     String placeholder = "{" + entry.getKey() + "}";
@@ -114,7 +121,6 @@ public class OpenApiSpecParser {
                     }
                 }
             }
-            // Fall back to default
             if (url.contains("{") && url.contains("}")) {
                 System.err.println("[Warning] Unresolved server variable(s) in URL: " + url
                         + ". Falling back to " + DEFAULT_BASE_URL);
@@ -123,6 +129,15 @@ public class OpenApiSpecParser {
             return url;
         }
         return DEFAULT_BASE_URL;
+    }
+
+    private int extractPort(String baseUrl) {
+        try {
+            java.net.URI uri = new java.net.URI(baseUrl);
+            return uri.getPort();
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -148,27 +163,27 @@ public class OpenApiSpecParser {
         return endpoints;
     }
 
-    
-
     private void addEndpointIfPresent(List<EndpointInfo> endpoints,
-                                       String path, String method, Operation operation, PathItem pathItem, OpenAPI openAPI) {
+                                      String path, String method, Operation operation,
+                                      PathItem pathItem, OpenAPI openAPI) {
         if (operation == null) {
             return;
         }
 
-        // Tool / function name
+        // Tool / function name — delegate to GeneratorUtils for consistent naming
         String toolName;
         if (operation.getOperationId() != null && !operation.getOperationId().isBlank()) {
-            toolName = sanitizeOperationId(operation.getOperationId(), method, path);
+            String sanitized = GeneratorUtils.getValidName(operation.getOperationId(), false);
+            toolName = sanitized.isEmpty() ? buildToolName(method, path) : sanitized;
         } else {
-            toolName = NameSanitizer.buildToolName(method, path);
+            toolName = buildToolName(method, path);
         }
 
-        // Description
         String description = operation.getSummary() != null ? operation.getSummary()
-            : operation.getDescription() != null ? operation.getDescription()
-            : "Executes " + method.toUpperCase() + " on " + path;
+                : operation.getDescription() != null ? operation.getDescription()
+                : "Executes " + method.toUpperCase() + " on " + path;
 
+        // Merge path-level and operation-level parameters (operation overrides)
         Map<String, Parameter> mergedParams = new LinkedHashMap<>();
         if (pathItem.getParameters() != null) {
             for (Parameter param : pathItem.getParameters()) {
@@ -191,19 +206,17 @@ public class OpenApiSpecParser {
         for (Parameter param : mergedParams.values()) {
             if ("path".equals(param.getIn())) {
                 String balType = schemaToBalType(param.getSchema());
-                String safeName = NameSanitizer.safeIdent(param.getName());
+                String safeName = GeneratorUtils.getValidName(param.getName(), false);
                 parameters.add(new ParameterInfo(param.getName(), safeName, balType, "path"));
             }
         }
 
-        // Request body type
         String bodyType = null;
         if (operation.getRequestBody() != null) {
             bodyType = extractRequestBodyType(operation.getRequestBody());
         }
 
         String returnType = extractReturnType(operation);
-
         String balPath = buildBalPath(path, parameters);
 
         endpoints.add(new EndpointInfo(
@@ -211,45 +224,16 @@ public class OpenApiSpecParser {
                 parameters, bodyType, returnType));
     }
 
-    // -----------------------------------------------------------------------
-    // Port extraction
-    // -----------------------------------------------------------------------
-    private int extractPort(String baseUrl) {
-        try {
-            java.net.URI uri = new java.net.URI(baseUrl);
-            return uri.getPort(); // returns -1 if not defined
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-
-    private String sanitizeOperationId(String operationId, String method, String path) {
-        String[] parts = operationId.split("[^a-zA-Z0-9]+");
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < parts.length; i++) {
-            if (parts[i].isEmpty()) continue;
-            if (i == 0) {
-                sb.append(parts[i]);
-            } else {
-                sb.append(Character.toUpperCase(parts[i].charAt(0)));
-                sb.append(parts[i].substring(1));
-            }
-        }
-        String result = sb.toString();
-        return result.isEmpty() ? NameSanitizer.buildToolName(method, path) : result;
-    }
-
     private Parameter resolveParameter(Parameter param, OpenAPI openAPI) {
-            if (param.get$ref() == null) {
-                return param;
-            }
-            String ref = param.get$ref();
-            String name = ref.substring(ref.lastIndexOf('/') + 1);
-            if (openAPI.getComponents() != null
-                    && openAPI.getComponents().getParameters() != null) {
-                return openAPI.getComponents().getParameters().get(name);
-            }
-            return null;
+        if (param.get$ref() == null) {
+            return param;
+        }
+        String ref = param.get$ref();
+        String name = ref.substring(ref.lastIndexOf('/') + 1);
+        if (openAPI.getComponents() != null && openAPI.getComponents().getParameters() != null) {
+            return openAPI.getComponents().getParameters().get(name);
+        }
+        return null;
     }
 
     private String extractRequestBodyType(RequestBody requestBody) {
@@ -307,100 +291,86 @@ public class OpenApiSpecParser {
     }
 
     // -----------------------------------------------------------------------
-    // Schema extraction
-    // -----------------------------------------------------------------------
-
-    private Map<String, SchemaInfo> extractSchemas(OpenAPI openAPI) {
-        Map<String, SchemaInfo> result = new LinkedHashMap<>();
-
-        Map<String, Schema> schemas = null;
-        if (openAPI.getComponents() != null && openAPI.getComponents().getSchemas() != null) {
-            schemas = openAPI.getComponents().getSchemas();
-        }
-        if (schemas == null) {
-            return result;
-        }
-
-        for (Map.Entry<String, Schema> entry : schemas.entrySet()) {
-            String origName = entry.getKey();
-            String balName = NameSanitizer.sanitizeTypeName(origName);
-            Schema<?> schema = entry.getValue();
-
-            List<SchemaInfo.FieldInfo> fields = new ArrayList<>();
-            if (schema.getProperties() != null) {
-                for (Map.Entry<?, ?> propEntry : schema.getProperties().entrySet()) {
-                    String propName = (String) propEntry.getKey();
-                    Schema<?> propSchema = (Schema<?>) propEntry.getValue();
-                    String balType = schemaToBalType(propSchema);
-                    String fieldIdent = NameSanitizer.safeIdent(propName);
-                    boolean required = schema.getRequired() != null
-                            && schema.getRequired().contains(propName);
-                    boolean needsAnnotation = !fieldIdent.equals(propName);
-                    fields.add(new SchemaInfo.FieldInfo(propName, fieldIdent, balType, required, needsAnnotation));
-                }
-            }
-
-            boolean needsTypeAnnotation = !balName.equals(origName);
-            result.put(origName, new SchemaInfo(origName, balName, fields, needsTypeAnnotation));
-        }
-        return result;
-    }
-
-    // -----------------------------------------------------------------------
-    // Type mapping (mirrors the script's inline jq type resolution)
+    // Type mapping — delegates to GeneratorUtils where possible
     // -----------------------------------------------------------------------
 
     /**
      * Maps an OpenAPI {@link Schema} to a Ballerina type string.
-     * Handles $ref, primitives (integer, string, boolean, number), and arrays.
-     * Falls back to {@code json} for anything else.
      *
-     * @param schema the OpenAPI schema to map
-     * @return Ballerina type name
+     * <ul>
+     *   <li>{@code $ref} → sanitized PascalCase type name via {@link GeneratorUtils#getValidName}</li>
+     *   <li>Arrays → {@code itemType[]}</li>
+     *   <li>Primitives → via {@link GeneratorUtils#convertOpenAPITypeToBallerina}</li>
+     *   <li>Fallback → {@code json}</li>
+     * </ul>
      */
     public static String schemaToBalType(Schema<?> schema) {
         if (schema == null) {
             return "json";
         }
-        // $ref
+
         if (schema.get$ref() != null) {
             String ref = schema.get$ref();
             String typeName = ref.substring(ref.lastIndexOf('/') + 1);
-            return NameSanitizer.sanitizeTypeName(typeName);
+            return GeneratorUtils.getValidName(typeName, true);
         }
 
-        String type = schema.getType();
-        if (type == null && schema.getTypes() != null && !schema.getTypes().isEmpty()) {
-            Set<String> types = schema.getTypes();
-            if (types.contains("integer")) {
-                type = "integer";
-            } else if (types.contains("number")) {
-                type = "number";
-            } else if (types.contains("boolean")) {
-                type = "boolean";
-            } else if (types.contains("string")) {
-                type = "string";
-            } else if (types.contains("array")) {
-                type = "array";
-            } else {
-                type = types.iterator().next(); 
-            }
-        }
+        String type = effectiveType(schema);
 
-        // Array type
         if ("array".equals(type)) {
-            if (schema.getItems() != null) {
-                return schemaToBalType(schema.getItems()) + "[]";
-            }
-            return "json[]";
+            return schema.getItems() != null
+                    ? schemaToBalType(schema.getItems()) + "[]"
+                    : "json[]";
         }
 
-        return switch (type == null ? "" : type) {
-            case "integer" -> "int";
-            case "string" -> "string";
-            case "boolean" -> "boolean";
-            case "number" -> "decimal";
-            default -> "json";
-        };
+        try {
+            return GeneratorUtils.convertOpenAPITypeToBallerina(schema, false);
+        } catch (UnsupportedOASDataTypeException e) {
+            return "json";
+        }
+    }
+
+    /**
+     * Resolves the effective OpenAPI type string from a schema, handling both
+     * the OAS 3.0 {@code type} field and the OAS 3.1 {@code types} set.
+     */
+    private static String effectiveType(Schema<?> schema) {
+        String type = schema.getType();
+        if (type != null) {
+            return type;
+        }
+        Set<String> types = schema.getTypes();
+        if (types == null || types.isEmpty()) {
+            return null;
+        }
+        for (String preferred : List.of("integer", "number", "boolean", "string", "array")) {
+            if (types.contains(preferred)) {
+                return preferred;
+            }
+        }
+        return types.iterator().next();
+    }
+
+    /**
+     * Builds a camelCase tool/function name from an HTTP method and path when no
+     * {@code operationId} is available.
+     *
+     * <p>e.g. {@code GET /pets/{petId}} → {@code getPetsPetId}
+     */
+    private static String buildToolName(String method, String path) {
+        String[] segments = path.split("/");
+        StringBuilder sb = new StringBuilder(method.toLowerCase());
+        for (String segment : segments) {
+            if (segment.isEmpty()) {
+                continue;
+            }
+            String cleaned = segment.replaceAll("[{}]", "");
+            if (!cleaned.isEmpty()) {
+                sb.append(Character.toUpperCase(cleaned.charAt(0)));
+                sb.append(cleaned.substring(1));
+            }
+        }
+        String name = sb.toString().replaceAll("[^a-zA-Z0-9_]", "");
+        return name.isEmpty() ? "operation" : GeneratorUtils.escapeIdentifier(name);
     }
 }

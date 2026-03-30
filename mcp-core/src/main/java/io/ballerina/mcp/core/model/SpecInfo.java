@@ -19,11 +19,14 @@
 package io.ballerina.mcp.core.model;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Holds all parsed information from an OpenAPI/Swagger specification
- * that is needed to generate a Ballerina MCP server project.
+ * Holds all parsed information from an OpenAPI specification that is needed to generate a
+ * Ballerina MCP server project.
+ *
+ * <p>Type definitions (types.bal) are generated separately by
+ * {@code McpProjectGenerator} using the raw {@code OpenAPI} model via
+ * {@code TypeHandler}, so schema details are not duplicated here.
  */
 public final class SpecInfo {
 
@@ -32,16 +35,14 @@ public final class SpecInfo {
     private final String title;
     private final String version;
     private final List<EndpointInfo> endpoints;
-    private final Map<String, SchemaInfo> schemas;
 
     public SpecInfo(String baseUrl, int port, String title, String version,
-                List<EndpointInfo> endpoints, Map<String, SchemaInfo> schemas) {
+                    List<EndpointInfo> endpoints) {
         this.baseUrl = baseUrl;
         this.port = port;
         this.title = title;
         this.version = version;
         this.endpoints = endpoints;
-        this.schemas = schemas;
     }
 
     public String getBaseUrl() { return baseUrl; }
@@ -49,5 +50,4 @@ public final class SpecInfo {
     public String getTitle() { return title; }
     public String getVersion() { return version; }
     public List<EndpointInfo> getEndpoints() { return endpoints; }
-    public Map<String, SchemaInfo> getSchemas() { return schemas; }
 }
