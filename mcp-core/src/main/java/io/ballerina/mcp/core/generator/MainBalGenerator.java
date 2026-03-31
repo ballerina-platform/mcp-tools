@@ -22,26 +22,16 @@ import io.ballerina.mcp.core.model.EndpointInfo;
 import io.ballerina.mcp.core.model.ParameterInfo;
 import io.ballerina.mcp.core.model.SpecInfo;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Generates the content of {@code main.bal} for a Ballerina MCP server project.
- *
- * <p>Output structure:
- * <pre>
- *   imports
- *   http:Client declaration
- *   mcp:Listener declaration
- *   @mcp:ServiceConfig annotation
- *   service mcp:Service /&lt;servicePath&gt; on mcpListener {
- *       // one remote function per endpoint
- *   }
- * </pre>
  */
 public class MainBalGenerator {
 
-    private static final String NL = System.lineSeparator();
+    private static final String NL = "\n";
     private static final String INDENT = "    ";
 
     /**
@@ -49,80 +39,53 @@ public class MainBalGenerator {
      *
      * @param spec the parsed spec information
      * @return the generated Ballerina source as a string
+     * @throws McpGenerationException if the template cannot be loaded
      */
-    public String generate(SpecInfo spec) {
-        StringBuilder sb = new StringBuilder();
+    public String generate(SpecInfo spec) throws McpGenerationException {
+        try {
+            String port = spec.getPort() > 0 ? String.valueOf(spec.getPort()) : "9090";
+            String servicePath = deriveServicePath(spec.getTitle());
+            String remoteFunctions = buildRemoteFunctions(spec.getEndpoints());
 
-        appendImports(sb);
-        appendClientAndListener(sb, spec.getBaseUrl(), spec.getPort());
-        appendServiceConfig(sb, spec.getTitle(), spec.getVersion());
-        appendServiceBlock(sb, spec);
-
-        return sb.toString();
-    }
-
-    // -----------------------------------------------------------------------
-
-    private void appendImports(StringBuilder sb) {
-        sb.append("import ballerina/log;").append(NL);
-        sb.append("import ballerina/mcp;").append(NL);
-        sb.append("import ballerina/http;").append(NL);
-        sb.append(NL);
-    }
-
-    private void appendClientAndListener(StringBuilder sb, String baseUrl, int port) {
-        sb.append("http:Client apiClient = check new (\"").append(baseUrl).append("\");").append(NL);
-        if (port > 0) {
-            sb.append("listener mcp:Listener mcpListener = check new (").append(port).append(");").append(NL);
-        } else {
-            sb.append("listener mcp:Listener mcpListener = check new (9090);").append(NL);
+            return TemplateLoader.load("main.bal")
+                    .replace("{{BASE_URL}}", spec.getBaseUrl())
+                    .replace("{{PORT}}", port)
+                    .replace("{{TITLE}}", escapeString(spec.getTitle()))
+                    .replace("{{VERSION}}", escapeString(spec.getVersion() != null ? spec.getVersion() : ""))
+                    .replace("{{SERVICE_PATH}}", servicePath)
+                    .replace("{{REMOTE_FUNCTIONS}}", remoteFunctions);
+        } catch (IOException e) {
+            throw new McpGenerationException("Failed to load main.bal template: " + e.getMessage(), e);
         }
-        sb.append(NL);
     }
 
-    private void appendServiceConfig(StringBuilder sb, String title, String version) {
-        sb.append("@mcp:ServiceConfig {").append(NL);
-        sb.append(INDENT).append("info: {").append(NL);
-        sb.append(INDENT).append(INDENT).append("name: \"").append(escapeString(title)).append("\",").append(NL);
-        sb.append(INDENT).append(INDENT).append("version: \"").append(escapeString(version)).append("\"").append(NL);
-        sb.append(INDENT).append("}").append(NL);
-        sb.append("}").append(NL);
-    }
-
-    private void appendServiceBlock(StringBuilder sb, SpecInfo spec) {
-        // Derive service path from title (lowercase, spaces → underscores)
-        String servicePath = spec.getTitle()
-                .toLowerCase()
+    private String deriveServicePath(String title) {
+        String path = title.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "_")
                 .replaceAll("^_|_$", "");
-        if (servicePath.isEmpty()) {
-            servicePath = "mcp";
-        }
+        return path.isEmpty() ? "mcp" : path;
+    }
 
-        sb.append("service mcp:Service /").append(servicePath).append(" on mcpListener {").append(NL);
-
-        for (EndpointInfo endpoint : spec.getEndpoints()) {
+    private String buildRemoteFunctions(List<EndpointInfo> endpoints) {
+        StringBuilder sb = new StringBuilder();
+        for (EndpointInfo endpoint : endpoints) {
             appendRemoteFunction(sb, endpoint);
         }
-
-        sb.append("}").append(NL);
+        return sb.toString();
     }
 
     private void appendRemoteFunction(StringBuilder sb, EndpointInfo endpoint) {
         sb.append(NL);
 
-        // @mcp:Tool annotation
         sb.append(INDENT).append("@mcp:Tool {").append(NL);
         sb.append(INDENT).append(INDENT).append("description: \"")
                 .append(escapeString(endpoint.getDescription())).append("\"").append(NL);
         sb.append(INDENT).append("}").append(NL);
 
-        // Function signature
         sb.append(INDENT).append("remote function ").append(endpoint.getToolName()).append("(");
         sb.append(buildArgList(endpoint));
         sb.append(") returns ").append(endpoint.getReturnType()).append("|error {").append(NL);
 
-        // Function body
         sb.append(INDENT).append(INDENT)
                 .append("log:printInfo(\"Proxying request to: \" + string `")
                 .append(endpoint.getBalPath()).append("`);").append(NL);
@@ -147,17 +110,12 @@ public class MainBalGenerator {
 
     private String buildArgList(EndpointInfo endpoint) {
         List<String> args = new ArrayList<>();
-
-        // Path parameters first
         for (ParameterInfo param : endpoint.getParameters()) {
             args.add(param.toArgDeclaration());
         }
-
-        // Then body
         if (endpoint.hasBody()) {
             args.add(endpoint.getBodyType() + " payload");
         }
-
         return String.join(", ", args);
     }
 

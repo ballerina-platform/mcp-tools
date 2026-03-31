@@ -21,6 +21,7 @@ package io.ballerina.mcp.core.generator;
 import io.ballerina.mcp.core.model.SpecInfo;
 import org.wso2.ballerinalang.util.RepoUtils;
 
+import java.io.IOException;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,29 +31,24 @@ import java.util.regex.Pattern;
  */
 public class BallerinaTomlGenerator {
 
-    private static final String NL = System.lineSeparator();
-
     /**
      * Generates the full content of {@code Ballerina.toml}.
      *
      * @param spec        the parsed spec information
      * @param packageName the Ballerina package name (derived from title)
      * @return the generated TOML content as a string
+     * @throws McpGenerationException if the template cannot be loaded
      */
-    public String generate(SpecInfo spec, String packageName) {
-        String version = normalizeVersion(spec.getVersion());
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("[package]").append(NL);
-        sb.append("org = \"").append(getOrgName()).append("\"").append(NL);
-        sb.append("name = \"").append(packageName).append("\"").append(NL);
-        sb.append("version = \"").append(version).append("\"").append(NL);
-        sb.append("distribution = \"").append(RepoUtils.getBallerinaShortVersion()).append("\"").append(NL);
-        sb.append(NL);
-        sb.append("[build-options]").append(NL);
-        sb.append("observabilityIncluded = true").append(NL);
-
-        return sb.toString();
+    public String generate(SpecInfo spec, String packageName) throws McpGenerationException {
+        try {
+            return TemplateLoader.load("Ballerina.toml")
+                    .replace("{{ORG}}", getOrgName())
+                    .replace("{{NAME}}", packageName)
+                    .replace("{{VERSION}}", normalizeVersion(spec.getVersion()))
+                    .replace("{{DISTRIBUTION}}", RepoUtils.getBallerinaShortVersion());
+        } catch (IOException e) {
+            throw new McpGenerationException("Failed to load Ballerina.toml template: " + e.getMessage(), e);
+        }
     }
 
     private String getOrgName() {
