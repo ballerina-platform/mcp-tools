@@ -25,9 +25,15 @@ import io.ballerina.mcp.core.utils.DiagnosticCode;
 import io.ballerina.mcp.core.utils.DiagnosticLog;
 import picocli.CommandLine;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Collectors;
 
 /**
  * Main CLI command for the Ballerina MCP tool.
@@ -39,12 +45,12 @@ import java.nio.file.Paths;
  * </pre>
  */
 @CommandLine.Command(
-        name = "mcp",
+        name = McpCmd.TOOL_NAME,
         description = "Generate a Ballerina MCP server project from an API contract."
 )
 public class McpCmd implements BLauncherCmd {
 
-    private static final String CMD_NAME = "mcp";
+    static final String TOOL_NAME = "mcp";
     private static final PrintStream OUT = System.out;
     private static final PrintStream ERR = System.err;
 
@@ -76,13 +82,11 @@ public class McpCmd implements BLauncherCmd {
     )
     private boolean helpFlag;
 
-    private CommandLine parentCmdParser;
 
     @Override
     public void execute() {
         if (helpFlag) {
-            String usageInfo = getUsageInfo();
-            OUT.println(usageInfo);
+            OUT.println(getHelpText());
             return;
         }
 
@@ -117,56 +121,29 @@ public class McpCmd implements BLauncherCmd {
 
     @Override
     public String getName() {
-        return CMD_NAME;
+        return TOOL_NAME;
     }
 
     @Override
     public void printLongDesc(StringBuilder out) {
-        out.append("Generate a Ballerina MCP (Model Context Protocol) server project").append(System.lineSeparator());
-        out.append("from a given API contract file.").append(System.lineSeparator());
-        out.append(System.lineSeparator());
-        out.append("The generated project includes:").append(System.lineSeparator());
-        out.append("  - Ballerina.toml   : Project configuration").append(System.lineSeparator());
-        out.append("  - main.bal         : MCP service with remote functions per API endpoint")
-                .append(System.lineSeparator());
-        out.append("  - types.bal        : Ballerina record types from API schemas").append(System.lineSeparator());
-        out.append("  - README.md        : Project documentation").append(System.lineSeparator());
     }
 
     @Override
     public void printUsage(StringBuilder out) {
-        out.append("  bal mcp -i <openapi-contract> -o <output-dir> --input-type openapi")
-                .append(System.lineSeparator());
     }
 
     @Override
     public void setParentCmdParser(CommandLine parentCmdParser) {
-        this.parentCmdParser = parentCmdParser;
     }
 
-    private String getUsageInfo() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("NAME").append(System.lineSeparator());
-        sb.append("    bal mcp - Generate a Ballerina MCP server from an API contract")
-                .append(System.lineSeparator());
-        sb.append(System.lineSeparator());
-        sb.append("SYNOPSIS").append(System.lineSeparator());
-        printUsage(sb);
-        sb.append(System.lineSeparator());
-        sb.append("DESCRIPTION").append(System.lineSeparator());
-        printLongDesc(sb);
-        sb.append(System.lineSeparator());
-        sb.append("OPTIONS").append(System.lineSeparator());
-        sb.append("  -i, --input          Path to the input API contract file").append(System.lineSeparator());
-        sb.append("  -o, --output         Output directory (default: current directory)").append(System.lineSeparator());
-        sb.append("  --input-type         Contract format: openapi (default: openapi)").append(System.lineSeparator());
-        sb.append("  -h, --help           Show this help message").append(System.lineSeparator());
-        sb.append(System.lineSeparator());
-        sb.append("EXAMPLES").append(System.lineSeparator());
-        sb.append("  bal mcp -i ./petstore.yaml -o ./petstore-mcp --input-type openapi")
-                .append(System.lineSeparator());
-        sb.append("  bal mcp -i ./api.json -o ./my-mcp-server --input-type openapi")
-                .append(System.lineSeparator());
-        return sb.toString();
+    private String getHelpText() {
+        try (InputStream inputStream = McpCmd.class.getClassLoader()
+                .getResourceAsStream("ballerina-" + TOOL_NAME + ".help");
+             BufferedReader reader = new BufferedReader(
+                     new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return reader.lines().collect(Collectors.joining("\n"));
+        } catch (IOException e) {
+            return "help text not found";
+        }
     }
 }
