@@ -35,6 +35,8 @@ import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import io.ballerina.mcp.core.model.EndpointInfo;
 import io.ballerina.mcp.core.model.ParameterInfo;
 import io.ballerina.mcp.core.model.SpecInfo;
+import io.ballerina.mcp.core.utils.DiagnosticCode;
+import io.ballerina.mcp.core.utils.DiagnosticLog;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -122,8 +124,8 @@ public class OpenApiSpecParser {
                 }
             }
             if (url.contains("{") && url.contains("}")) {
-                System.err.println("[Warning] Unresolved server variable(s) in URL: " + url
-                        + ". Falling back to " + DEFAULT_BASE_URL);
+                System.err.println(DiagnosticLog.warning(
+                        DiagnosticCode.UNRESOLVED_SERVER_VARIABLE, url, DEFAULT_BASE_URL));
                 return DEFAULT_BASE_URL;
             }
             return url;

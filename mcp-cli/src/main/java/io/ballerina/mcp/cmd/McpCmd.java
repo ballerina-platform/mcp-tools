@@ -19,8 +19,10 @@
 package io.ballerina.mcp.cmd;
 
 import io.ballerina.cli.BLauncherCmd;
-import io.ballerina.mcp.core.generator.McpProjectGenerator;
 import io.ballerina.mcp.core.generator.GeneratorOptions;
+import io.ballerina.mcp.core.generator.McpProjectGenerator;
+import io.ballerina.mcp.core.utils.DiagnosticCode;
+import io.ballerina.mcp.core.utils.DiagnosticLog;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -86,8 +88,7 @@ public class McpCmd implements BLauncherCmd {
 
         // Validate --input-type
         if (!"openapi".equalsIgnoreCase(inputType)) {
-            ERR.println("ERROR: Unsupported --input-type '" + inputType
-                    + "'. Currently supported types: openapi");
+            ERR.println(DiagnosticLog.error(DiagnosticCode.UNSUPPORTED_INPUT_TYPE, inputType));
             Runtime.getRuntime().exit(1);
             return;
         }
@@ -96,7 +97,7 @@ public class McpCmd implements BLauncherCmd {
         Path output = Paths.get(outputPath).toAbsolutePath().normalize();
 
         if (!input.toFile().exists()) {
-            ERR.println("ERROR: Input file not found: " + input);
+            ERR.println(DiagnosticLog.error(DiagnosticCode.INPUT_FILE_NOT_FOUND, input));
             Runtime.getRuntime().exit(1);
             return;
         }
@@ -109,7 +110,7 @@ public class McpCmd implements BLauncherCmd {
             generator.generate();
             OUT.println("MCP server project generated successfully at: " + output);
         } catch (Exception e) {
-            ERR.println("ERROR: MCP generation failed: " + e.getMessage());
+            ERR.println(DiagnosticLog.error(DiagnosticCode.MCP_GENERATION_FAILED, e.getMessage()));
             Runtime.getRuntime().exit(1);
         }
     }
