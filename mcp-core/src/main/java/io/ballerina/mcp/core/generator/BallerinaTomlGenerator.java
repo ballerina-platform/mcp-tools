@@ -19,6 +19,11 @@
 package io.ballerina.mcp.core.generator;
 
 import io.ballerina.mcp.core.model.SpecInfo;
+import org.wso2.ballerinalang.util.RepoUtils;
+
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Generates the content of {@code Ballerina.toml} for a Ballerina MCP server project.
@@ -39,10 +44,10 @@ public class BallerinaTomlGenerator {
 
         StringBuilder sb = new StringBuilder();
         sb.append("[package]").append(NL);
-        sb.append("org = \"generated\"").append(NL);
+        sb.append("org = \"").append(getOrgName()).append("\"").append(NL);
         sb.append("name = \"").append(packageName).append("\"").append(NL);
         sb.append("version = \"").append(version).append("\"").append(NL);
-        sb.append("distribution = \"2201.13.1\"").append(NL);
+        sb.append("distribution = \"").append(RepoUtils.getBallerinaShortVersion()).append("\"").append(NL);
         sb.append(NL);
         sb.append("[build-options]").append(NL);
         sb.append("observabilityIncluded = true").append(NL);
@@ -50,22 +55,29 @@ public class BallerinaTomlGenerator {
         return sb.toString();
     }
 
+    private String getOrgName() {
+        String userName = System.getProperty("user.name");
+        if (userName == null) {
+            return "my_org";
+        }
+        return userName.replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase(Locale.getDefault());
+    }
+
     /**
-     * Normalises an API version string to a semver-compatible format.
-     * e.g. "1.0" → "1.0.0", "v2" → "2.0.0", "1.0.0" → "1.0.0"
+     * Normalizes the version string to a valid SemVer format (major.minor.patch).
      */
     private String normalizeVersion(String version) {
         if (version == null || version.isBlank()) {
             return "0.1.0";
         }
-        // Strip leading 'v'
         String v = version.startsWith("v") ? version.substring(1) : version;
-
-        String[] parts = v.split("\\.");
-        return switch (parts.length) {
-            case 1 -> parts[0] + ".0.0";
-            case 2 -> parts[0] + "." + parts[1] + ".0";
-            default -> parts[0] + "." + parts[1] + "." + parts[2];
-        };
+        Matcher matcher = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?").matcher(v);
+        if (!matcher.find()) {
+            return "0.1.0";
+        }
+        String major = matcher.group(1);
+        String minor = matcher.group(2) != null ? matcher.group(2) : "0";
+        String patch = matcher.group(3) != null ? matcher.group(3) : "0";
+        return major + "." + minor + "." + patch;
     }
 }

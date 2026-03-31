@@ -46,7 +46,8 @@ dependencies {
     // Ballerina parser
     implementation group: 'org.ballerinalang', name: 'ballerina-parser', version: "${ballerinaLangVersion}"
 
-   compileOnly files("${buildDir}/extracted-formatter/formatter-core-${ballerinaLangVersion}.jar")
+    compileOnly files("${buildDir}/extracted-formatter/formatter-core-${ballerinaLangVersion}.jar")
+    compileOnly group: 'org.ballerinalang', name: 'ballerina-lang', version: "${ballerinaLangVersion}"
 
     // Ballerina OpenAPI core
     implementation "io.ballerina.openapi:core:${openApiCoreVersion}"
