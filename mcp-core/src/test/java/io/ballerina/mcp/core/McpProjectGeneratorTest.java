@@ -19,6 +19,7 @@
 package io.ballerina.mcp.core;
 
 import io.ballerina.mcp.core.generator.GeneratorOptions;
+import io.ballerina.mcp.core.generator.GeneratorUtils;
 import io.ballerina.mcp.core.generator.McpProjectGenerator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -94,10 +95,10 @@ public class McpProjectGeneratorTest {
 
     @Test
     public void testDerivePackageName() {
-        Assert.assertEquals(McpProjectGenerator.derivePackageName("Petstore"), "petstore_mcp");
-        Assert.assertEquals(McpProjectGenerator.derivePackageName("My REST API"), "my_rest_api_mcp");
-        Assert.assertEquals(McpProjectGenerator.derivePackageName(""), "mcp_server");
-        Assert.assertEquals(McpProjectGenerator.derivePackageName(null), "mcp_server");
-        Assert.assertEquals(McpProjectGenerator.derivePackageName("123 API"), "_123_api_mcp");
+        Assert.assertEquals(GeneratorUtils.derivePackageName("Petstore"), "petstore_mcp");
+        Assert.assertEquals(GeneratorUtils.derivePackageName("My REST API"), "my_rest_api_mcp");
+        Assert.assertEquals(GeneratorUtils.derivePackageName(""), "mcp_server");
+        Assert.assertEquals(GeneratorUtils.derivePackageName(null), "mcp_server");
+        Assert.assertEquals(GeneratorUtils.derivePackageName("123 API"), "_123_api_mcp");
     }
 }
