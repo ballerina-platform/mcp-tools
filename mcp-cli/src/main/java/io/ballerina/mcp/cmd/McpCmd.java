@@ -56,8 +56,7 @@ public class McpCmd implements BLauncherCmd {
 
     @CommandLine.Option(
             names = {"-i", "--input"},
-            description = "Path to the input API contract file (OpenAPI/Swagger YAML or JSON).",
-            required = true
+            description = "Path to the input API contract file (OpenAPI/Swagger YAML or JSON)."
     )
     private String inputPath;
 
@@ -87,6 +86,12 @@ public class McpCmd implements BLauncherCmd {
     public void execute() {
         if (helpFlag) {
             OUT.println(getHelpText());
+            return;
+        }
+
+        if (inputPath == null) {
+            OUT.println(getHelpText());
+            Runtime.getRuntime().exit(1);
             return;
         }
 
