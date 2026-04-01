@@ -25,6 +25,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -91,6 +92,30 @@ public class McpProjectGeneratorTest {
         String readme = Files.readString(projectDir.resolve("README.md"));
         Assert.assertTrue(readme.contains("Petstore"), "README should mention API title");
         Assert.assertTrue(readme.contains("listPets"), "README should list tool functions");
+    }
+
+    @Test
+    public void testGeneratedProjectCompiles() throws Exception {
+        URL resource = getClass().getClassLoader().getResource("specs/petstore.yaml");
+        Assert.assertNotNull(resource, "petstore.yaml test resource not found");
+
+        Path inputPath = Paths.get(resource.toURI());
+        Path outputPath = Files.createTempDirectory("mcp-compile-test-");
+
+        new McpProjectGenerator(new GeneratorOptions(inputPath, outputPath, "openapi")).generate();
+
+        Path projectDir = outputPath.resolve("petstore_mcp");
+
+        ProcessBuilder pb = new ProcessBuilder("bal", "build");
+        pb.directory(projectDir.toFile());
+        pb.redirectErrorStream(true);
+
+        Process process = pb.start();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        int exitCode = process.waitFor();
+
+        Assert.assertEquals(exitCode, 0,
+                "Generated project should compile without errors. bal build output:\n" + output);
     }
 
     @Test
