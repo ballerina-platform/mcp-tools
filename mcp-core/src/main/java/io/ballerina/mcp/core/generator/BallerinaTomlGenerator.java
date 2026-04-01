@@ -54,7 +54,7 @@ public class BallerinaTomlGenerator {
     private String getOrgName() {
         String userName = System.getProperty("user.name");
         if (userName == null) {
-            return "my_org";
+            return Constants.DEFAULT_ORG_NAME;
         }
         return userName.replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase(Locale.getDefault());
     }
@@ -64,12 +64,12 @@ public class BallerinaTomlGenerator {
      */
     private String normalizeVersion(String version) {
         if (version == null || version.isBlank()) {
-            return "0.1.0";
+            return Constants.DEFAULT_VERSION;
         }
         String v = version.startsWith("v") ? version.substring(1) : version;
         Matcher matcher = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?").matcher(v);
         if (!matcher.find()) {
-            return "0.1.0";
+            return Constants.DEFAULT_VERSION;
         }
         String major = matcher.group(1);
         String minor = matcher.group(2) != null ? matcher.group(2) : "0";

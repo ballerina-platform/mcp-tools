@@ -43,7 +43,7 @@ public class MainBalGenerator {
      */
     public String generate(SpecInfo spec) throws McpGenerationException {
         try {
-            String port = spec.getPort() > 0 ? String.valueOf(spec.getPort()) : "9090";
+            String port = spec.getPort() > 0 ? String.valueOf(spec.getPort()) : Constants.DEFAULT_MCP_PORT;
             String servicePath = deriveServicePath(spec.getTitle());
             String remoteFunctions = buildRemoteFunctions(spec.getEndpoints());
 
@@ -63,7 +63,7 @@ public class MainBalGenerator {
         String path = title.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "_")
                 .replaceAll("^_|_$", "");
-        return path.isEmpty() ? "mcp" : path;
+        return path.isEmpty() ? Constants.DEFAULT_SERVICE_PATH : path;
     }
 
     private String buildRemoteFunctions(List<EndpointInfo> endpoints) {
@@ -97,9 +97,9 @@ public class MainBalGenerator {
 
         if (endpoint.hasBody()) {
             sb.append(", payload");
-        } else if (endpoint.getMethod().equals("post")
-                || endpoint.getMethod().equals("put")
-                || endpoint.getMethod().equals("patch")) {
+        } else if (endpoint.getMethod().equals(Constants.HTTP_POST)
+                || endpoint.getMethod().equals(Constants.HTTP_PUT)
+                || endpoint.getMethod().equals(Constants.HTTP_PATCH)) {
             sb.append(", {}");
         }
 

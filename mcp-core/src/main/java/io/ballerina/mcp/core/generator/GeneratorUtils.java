@@ -38,13 +38,13 @@ public class GeneratorUtils {
      */
     public static String derivePackageName(String title) {
         if (title == null || title.isBlank()) {
-            return "mcp_server";
+            return Constants.DEFAULT_PACKAGE_NAME;
         }
         String name = title.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "_")
                 .replaceAll("^_|_$", "");
         if (name.isEmpty()) {
-            return "mcp_server";
+            return Constants.DEFAULT_PACKAGE_NAME;
         }
         if (Character.isDigit(name.charAt(0))) {
             name = "_" + name;

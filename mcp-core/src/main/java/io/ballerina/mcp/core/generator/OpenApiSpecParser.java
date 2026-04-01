@@ -18,6 +18,11 @@
 
 package io.ballerina.mcp.core.generator;
 
+import io.ballerina.mcp.core.model.EndpointInfo;
+import io.ballerina.mcp.core.model.ParameterInfo;
+import io.ballerina.mcp.core.model.SpecInfo;
+import io.ballerina.mcp.core.utils.DiagnosticCode;
+import io.ballerina.mcp.core.utils.DiagnosticLog;
 import io.ballerina.openapi.core.generators.common.GeneratorUtils;
 import io.ballerina.openapi.core.generators.common.exception.UnsupportedOASDataTypeException;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -32,11 +37,6 @@ import io.swagger.v3.oas.models.servers.ServerVariable;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
-import io.ballerina.mcp.core.model.EndpointInfo;
-import io.ballerina.mcp.core.model.ParameterInfo;
-import io.ballerina.mcp.core.model.SpecInfo;
-import io.ballerina.mcp.core.utils.DiagnosticCode;
-import io.ballerina.mcp.core.utils.DiagnosticLog;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -87,7 +87,8 @@ public class OpenApiSpecParser {
         String baseUrl = extractBaseUrl(openAPI);
         int port = extractPort(baseUrl);
         String title = openAPI.getInfo() != null ? openAPI.getInfo().getTitle() : "Proxy Service";
-        String version = openAPI.getInfo() != null ? openAPI.getInfo().getVersion() : "1.0.0";
+        String version = openAPI.getInfo() != null ? openAPI.getInfo().getVersion()
+                : Constants.DEFAULT_SPEC_VERSION;
 
         List<EndpointInfo> endpoints = extractEndpoints(openAPI);
 
@@ -102,10 +103,6 @@ public class OpenApiSpecParser {
     public OpenAPI getOpenAPI() {
         return parsedOpenAPI;
     }
-
-    // -----------------------------------------------------------------------
-    // Base URL extraction
-    // -----------------------------------------------------------------------
 
     private String extractBaseUrl(OpenAPI openAPI) {
         if (openAPI.getServers() != null && !openAPI.getServers().isEmpty()) {
@@ -142,10 +139,6 @@ public class OpenApiSpecParser {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Endpoint extraction
-    // -----------------------------------------------------------------------
-
     private List<EndpointInfo> extractEndpoints(OpenAPI openAPI) {
         List<EndpointInfo> endpoints = new ArrayList<>();
         if (openAPI.getPaths() == null) {
@@ -156,11 +149,11 @@ public class OpenApiSpecParser {
             String path = pathEntry.getKey();
             PathItem pathItem = pathEntry.getValue();
 
-            addEndpointIfPresent(endpoints, path, "get",    pathItem.getGet(),    pathItem, openAPI);
-            addEndpointIfPresent(endpoints, path, "post",   pathItem.getPost(),   pathItem, openAPI);
-            addEndpointIfPresent(endpoints, path, "put",    pathItem.getPut(),    pathItem, openAPI);
-            addEndpointIfPresent(endpoints, path, "delete", pathItem.getDelete(), pathItem, openAPI);
-            addEndpointIfPresent(endpoints, path, "patch",  pathItem.getPatch(),  pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, Constants.HTTP_GET,    pathItem.getGet(),    pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, Constants.HTTP_POST,   pathItem.getPost(),   pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, Constants.HTTP_PUT,    pathItem.getPut(),    pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, Constants.HTTP_DELETE, pathItem.getDelete(), pathItem, openAPI);
+            addEndpointIfPresent(endpoints, path, Constants.HTTP_PATCH,  pathItem.getPatch(),  pathItem, openAPI);
         }
         return endpoints;
     }
@@ -172,7 +165,6 @@ public class OpenApiSpecParser {
             return;
         }
 
-        // Tool / function name — delegate to GeneratorUtils for consistent naming
         String toolName;
         if (operation.getOperationId() != null && !operation.getOperationId().isBlank()) {
             String sanitized = GeneratorUtils.getValidName(operation.getOperationId(), false);
@@ -185,7 +177,6 @@ public class OpenApiSpecParser {
                 : operation.getDescription() != null ? operation.getDescription()
                 : "Executes " + method.toUpperCase() + " on " + path;
 
-        // Merge path-level and operation-level parameters (operation overrides)
         Map<String, Parameter> mergedParams = new LinkedHashMap<>();
         if (pathItem.getParameters() != null) {
             for (Parameter param : pathItem.getParameters()) {
@@ -206,10 +197,11 @@ public class OpenApiSpecParser {
 
         List<ParameterInfo> parameters = new ArrayList<>();
         for (Parameter param : mergedParams.values()) {
-            if ("path".equals(param.getIn())) {
+            if (Constants.PARAM_IN_PATH.equals(param.getIn())) {
                 String balType = schemaToBalType(param.getSchema());
                 String safeName = GeneratorUtils.getValidName(param.getName(), false);
-                parameters.add(new ParameterInfo(param.getName(), safeName, balType, "path"));
+                parameters.add(new ParameterInfo(param.getName(), safeName, balType,
+                        Constants.PARAM_IN_PATH));
             }
         }
 
@@ -240,16 +232,16 @@ public class OpenApiSpecParser {
 
     private String extractRequestBodyType(RequestBody requestBody) {
         if (requestBody.getContent() != null
-                && requestBody.getContent().containsKey("application/json")) {
-            Schema<?> schema = requestBody.getContent().get("application/json").getSchema();
+                && requestBody.getContent().containsKey(Constants.CONTENT_TYPE_JSON)) {
+            Schema<?> schema = requestBody.getContent().get(Constants.CONTENT_TYPE_JSON).getSchema();
             return schemaToBalType(schema);
         }
-        return "json";
+        return Constants.BAL_TYPE_JSON;
     }
 
     private String extractReturnType(Operation operation) {
         if (operation.getResponses() == null) {
-            return "json";
+            return Constants.BAL_TYPE_JSON;
         }
         for (Map.Entry<String, ApiResponse> entry : operation.getResponses().entrySet()) {
             String statusCode = entry.getKey();
@@ -258,17 +250,17 @@ public class OpenApiSpecParser {
             }
             ApiResponse response = entry.getValue();
             if (response.getContent() == null) {
-                return "json";
+                return Constants.BAL_TYPE_JSON;
             }
-            if (response.getContent().containsKey("application/json")) {
-                Schema<?> schema = response.getContent().get("application/json").getSchema();
+            if (response.getContent().containsKey(Constants.CONTENT_TYPE_JSON)) {
+                Schema<?> schema = response.getContent().get(Constants.CONTENT_TYPE_JSON).getSchema();
                 return schemaToBalType(schema);
             }
-            if (response.getContent().containsKey("text/plain")) {
-                return "string";
+            if (response.getContent().containsKey(Constants.CONTENT_TYPE_TEXT_PLAIN)) {
+                return Constants.BAL_TYPE_STRING;
             }
         }
-        return "json";
+        return Constants.BAL_TYPE_JSON;
     }
 
     private String buildBalPath(String path, List<ParameterInfo> parameters) {
@@ -292,10 +284,6 @@ public class OpenApiSpecParser {
         return sb.toString();
     }
 
-    // -----------------------------------------------------------------------
-    // Type mapping — delegates to GeneratorUtils where possible
-    // -----------------------------------------------------------------------
-
     /**
      * Maps an OpenAPI {@link Schema} to a Ballerina type string.
      *
@@ -308,7 +296,7 @@ public class OpenApiSpecParser {
      */
     public static String schemaToBalType(Schema<?> schema) {
         if (schema == null) {
-            return "json";
+            return Constants.BAL_TYPE_JSON;
         }
 
         if (schema.get$ref() != null) {
@@ -319,16 +307,16 @@ public class OpenApiSpecParser {
 
         String type = effectiveType(schema);
 
-        if ("array".equals(type)) {
+        if (Constants.OAS_TYPE_ARRAY.equals(type)) {
             return schema.getItems() != null
                     ? schemaToBalType(schema.getItems()) + "[]"
-                    : "json[]";
+                    : Constants.BAL_TYPE_JSON + "[]";
         }
 
         try {
             return GeneratorUtils.convertOpenAPITypeToBallerina(schema, false);
         } catch (UnsupportedOASDataTypeException e) {
-            return "json";
+            return Constants.BAL_TYPE_JSON;
         }
     }
 
@@ -345,7 +333,8 @@ public class OpenApiSpecParser {
         if (types == null || types.isEmpty()) {
             return null;
         }
-        for (String preferred : List.of("integer", "number", "boolean", "string", "array")) {
+        for (String preferred : List.of(Constants.OAS_TYPE_INTEGER, Constants.OAS_TYPE_NUMBER,
+                Constants.OAS_TYPE_BOOLEAN, Constants.BAL_TYPE_STRING, Constants.OAS_TYPE_ARRAY)) {
             if (types.contains(preferred)) {
                 return preferred;
             }
@@ -373,6 +362,6 @@ public class OpenApiSpecParser {
             }
         }
         String name = sb.toString().replaceAll("[^a-zA-Z0-9_]", "");
-        return name.isEmpty() ? "operation" : GeneratorUtils.escapeIdentifier(name);
+        return name.isEmpty() ? Constants.DEFAULT_TOOL_NAME : GeneratorUtils.escapeIdentifier(name);
     }
 }
