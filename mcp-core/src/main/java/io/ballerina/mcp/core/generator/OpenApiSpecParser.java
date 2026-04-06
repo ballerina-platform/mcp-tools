@@ -68,6 +68,13 @@ public class OpenApiSpecParser {
      * @throws McpGenerationException if the file cannot be parsed
      */
     public SpecInfo parse(Path specPath) throws McpGenerationException {
+        String fileName = specPath.getFileName().toString().toLowerCase();
+        if (!fileName.endsWith(".yaml") && !fileName.endsWith(".yml") && !fileName.endsWith(".json")) {
+            throw new McpGenerationException(
+                    "Unsupported file type: '" + specPath.getFileName() + "'. " +
+                    "Supported formats are: .yaml, .yml, .json");
+        }
+
         ParseOptions parseOptions = new ParseOptions();
         parseOptions.setResolve(true);
 
