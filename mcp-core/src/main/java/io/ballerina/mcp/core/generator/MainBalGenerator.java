@@ -74,6 +74,19 @@ public class MainBalGenerator {
         return sb.toString();
     }
 
+    private String buildPathWithQuery(EndpointInfo endpoint) {
+        StringBuilder path = new StringBuilder(endpoint.getBalPath());
+        if (endpoint.hasQueryParams()) {
+            path.append("?");
+            List<String> queryParts = new ArrayList<>();
+            for (ParameterInfo qp : endpoint.getQueryParameters()) {
+                queryParts.add(qp.getOriginalName() + "=${" + qp.getSafeName() + "}");
+            }
+            path.append(String.join("&", queryParts));
+        }
+        return path.toString();
+    }
+
     private void appendRemoteFunction(StringBuilder sb, EndpointInfo endpoint) {
         sb.append(NL);
 
@@ -86,14 +99,16 @@ public class MainBalGenerator {
         sb.append(buildArgList(endpoint));
         sb.append(") returns ").append(endpoint.getReturnType()).append("|error {").append(NL);
 
+        String pathWithQuery = buildPathWithQuery(endpoint);
+
         sb.append(INDENT).append(INDENT)
                 .append("log:printInfo(\"Proxying request to: \" + string `")
-                .append(endpoint.getBalPath()).append("`);").append(NL);
+                .append(pathWithQuery).append("`);").append(NL);
 
         sb.append(INDENT).append(INDENT)
                 .append(endpoint.getReturnType()).append(" response = check apiClient->")
                 .append(endpoint.getMethod()).append("(string `")
-                .append(endpoint.getBalPath()).append("`");
+                .append(pathWithQuery).append("`");
 
         if (endpoint.hasBody()) {
             sb.append(", payload");
