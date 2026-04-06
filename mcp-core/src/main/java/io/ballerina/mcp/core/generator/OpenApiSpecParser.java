@@ -205,16 +205,19 @@ public class OpenApiSpecParser {
 
         List<ParameterInfo> parameters = new ArrayList<>();
         List<ParameterInfo> queryParameters = new ArrayList<>();
+        Set<String> usedNames = new java.util.HashSet<>();
 
         for (Parameter param : mergedParams.values()) {
             if (Constants.PARAM_IN_PATH.equals(param.getIn())) {
                 String balType = schemaToBalType(param.getSchema());
-                String safeName = GeneratorUtils.getValidName(param.getName(), false);
+                String safeName = deduplicateSafeName(
+                        GeneratorUtils.getValidName(param.getName(), false), usedNames);
                 parameters.add(new ParameterInfo(param.getName(), safeName, balType,
                         Constants.PARAM_IN_PATH));
             } else if (Constants.PARAM_IN_QUERY.equals(param.getIn())) {
                 String balType = schemaToBalType(param.getSchema());
-                String safeName = GeneratorUtils.getValidName(param.getName(), false);
+                String safeName = deduplicateSafeName(
+                        GeneratorUtils.getValidName(param.getName(), false), usedNames);
                 queryParameters.add(new ParameterInfo(param.getName(), safeName, balType,
                         Constants.PARAM_IN_QUERY));
             }
@@ -243,6 +246,21 @@ public class OpenApiSpecParser {
             return openAPI.getComponents().getParameters().get(name);
         }
         return null;
+    }
+
+    private String deduplicateSafeName(String safeName, Set<String> usedNames) {
+        if (!usedNames.contains(safeName)) {
+            usedNames.add(safeName);
+            return safeName;
+        }
+        int counter = 1;
+        String candidate = safeName + counter;
+        while (usedNames.contains(candidate)) {
+            counter++;
+            candidate = safeName + counter;
+        }
+        usedNames.add(candidate);
+        return candidate;
     }
 
     private String extractRequestBodyType(RequestBody requestBody) {
