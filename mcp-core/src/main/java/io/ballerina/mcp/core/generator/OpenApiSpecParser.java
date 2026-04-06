@@ -321,7 +321,7 @@ public class OpenApiSpecParser {
      * Maps an OpenAPI {@link Schema} to a Ballerina type string.
      *
      * <ul>
-     *   <li>{@code $ref} → sanitized PascalCase type name via {@link GeneratorUtils#getValidName}</li>
+     *   <li>{@code $ref} → sanitized PascalCase type name via {@link GeneratorUtils#escapeIdentifier}</li>
      *   <li>Arrays → {@code itemType[]}</li>
      *   <li>Primitives → via {@link GeneratorUtils#convertOpenAPITypeToBallerina}</li>
      *   <li>Fallback → {@code json}</li>
@@ -335,7 +335,7 @@ public class OpenApiSpecParser {
         if (schema.get$ref() != null) {
             String ref = schema.get$ref();
             String typeName = ref.substring(ref.lastIndexOf('/') + 1);
-            return GeneratorUtils.getValidName(typeName, true);
+            return GeneratorUtils.escapeIdentifier(typeName);
         }
 
         String type = effectiveType(schema);
