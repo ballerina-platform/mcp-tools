@@ -77,6 +77,7 @@ public class OpenApiSpecParser {
 
         ParseOptions parseOptions = new ParseOptions();
         parseOptions.setResolve(true);
+        parseOptions.setFlatten(true);
 
         SwaggerParseResult result = new OpenAPIV3Parser()
                 .readLocation(specPath.toString(), null, parseOptions);
