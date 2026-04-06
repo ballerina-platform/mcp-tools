@@ -35,6 +35,7 @@ public class Constants {
 
     // OpenAPI parameter locations
     public static final String PARAM_IN_PATH = "path";
+    public static final String PARAM_IN_QUERY = "query";
 
     // Content types
     public static final String CONTENT_TYPE_JSON = "application/json";

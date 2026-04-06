@@ -103,6 +103,16 @@ public class MainBalGenerator {
             sb.append(", {}");
         }
 
+        if (endpoint.hasQueryParams()) {
+            sb.append(", queries = {");
+            List<String> queryEntries = new ArrayList<>();
+            for (ParameterInfo qp : endpoint.getQueryParameters()) {
+                queryEntries.add("\"" + qp.getOriginalName() + "\": " + qp.getSafeName());
+            }
+            sb.append(String.join(", ", queryEntries));
+            sb.append("}");
+        }
+
         sb.append(");").append(NL);
         sb.append(INDENT).append(INDENT).append("return response;").append(NL);
         sb.append(INDENT).append("}").append(NL);
@@ -111,6 +121,9 @@ public class MainBalGenerator {
     private String buildArgList(EndpointInfo endpoint) {
         List<String> args = new ArrayList<>();
         for (ParameterInfo param : endpoint.getParameters()) {
+            args.add(param.toArgDeclaration());
+        }
+        for (ParameterInfo param : endpoint.getQueryParameters()) {
             args.add(param.toArgDeclaration());
         }
         if (endpoint.hasBody()) {

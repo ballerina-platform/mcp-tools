@@ -32,11 +32,12 @@ public final class EndpointInfo {
     private final String toolName;
     private final String description;
     private final List<ParameterInfo> parameters;
+    private final List<ParameterInfo> queryParameters;
     private final String bodyType;
     private final String returnType;
 
     public EndpointInfo(String path, String balPath, String method, String toolName,
-                        String description, List<ParameterInfo> parameters,
+                        String description, List<ParameterInfo> parameters, List<ParameterInfo> queryParameters,
                         String bodyType, String returnType) {
         this.path = path;
         this.balPath = balPath;
@@ -44,6 +45,7 @@ public final class EndpointInfo {
         this.toolName = toolName;
         this.description = description;
         this.parameters = parameters;
+        this.queryParameters = queryParameters;
         this.bodyType = bodyType;
         this.returnType = returnType;
     }
@@ -69,6 +71,9 @@ public final class EndpointInfo {
     /** List of path parameters with their Ballerina types. */
     public List<ParameterInfo> getParameters() { return parameters; }
 
+    /** List of query parameters with their Ballerina types. */
+    public List<ParameterInfo> getQueryParameters() { return queryParameters; }
+
     /**
      * Ballerina type of the request body, or {@code null} if no body.
      */
@@ -79,4 +84,7 @@ public final class EndpointInfo {
 
     /** Returns {@code true} if this endpoint has a request body. */
     public boolean hasBody() { return bodyType != null; }
+
+    /** Returns {@code true} if this endpoint has query parameters. */
+    public boolean hasQueryParams() { return queryParameters != null && !queryParameters.isEmpty(); }
 }

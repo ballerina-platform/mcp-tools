@@ -203,12 +203,19 @@ public class OpenApiSpecParser {
         }
 
         List<ParameterInfo> parameters = new ArrayList<>();
+        List<ParameterInfo> queryParameters = new ArrayList<>();
+
         for (Parameter param : mergedParams.values()) {
             if (Constants.PARAM_IN_PATH.equals(param.getIn())) {
                 String balType = schemaToBalType(param.getSchema());
                 String safeName = GeneratorUtils.getValidName(param.getName(), false);
                 parameters.add(new ParameterInfo(param.getName(), safeName, balType,
                         Constants.PARAM_IN_PATH));
+            } else if (Constants.PARAM_IN_QUERY.equals(param.getIn())) {
+                String balType = schemaToBalType(param.getSchema());
+                String safeName = GeneratorUtils.getValidName(param.getName(), false);
+                queryParameters.add(new ParameterInfo(param.getName(), safeName, balType,
+                        Constants.PARAM_IN_QUERY));
             }
         }
 
@@ -221,8 +228,8 @@ public class OpenApiSpecParser {
         String balPath = buildBalPath(path, parameters);
 
         endpoints.add(new EndpointInfo(
-                path, balPath, method, toolName, description,
-                parameters, bodyType, returnType));
+            path, balPath, method, toolName, description,
+            parameters, queryParameters, bodyType, returnType));
     }
 
     private Parameter resolveParameter(Parameter param, OpenAPI openAPI) {
