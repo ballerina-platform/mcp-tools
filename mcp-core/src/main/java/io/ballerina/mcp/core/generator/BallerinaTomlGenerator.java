@@ -31,6 +31,10 @@ import java.util.regex.Pattern;
  */
 public class BallerinaTomlGenerator {
 
+    private static final Pattern SEMVER_PATTERN = Pattern.compile(
+        "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?" +
+            "(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$");
+
     /**
      * Generates the full content of {@code Ballerina.toml}.
      *
@@ -66,14 +70,33 @@ public class BallerinaTomlGenerator {
         if (version == null || version.isBlank()) {
             return Constants.DEFAULT_VERSION;
         }
-        String v = version.startsWith("v") ? version.substring(1) : version;
-        Matcher matcher = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?").matcher(v);
-        if (!matcher.find()) {
+        String v = version.strip();
+        if (v.startsWith("v") || v.startsWith("V")) {
+            v = v.substring(1);
+        }
+
+        Matcher matcher = SEMVER_PATTERN.matcher(v);
+        if (!matcher.matches()) {
             return Constants.DEFAULT_VERSION;
         }
+
         String major = matcher.group(1);
         String minor = matcher.group(2) != null ? matcher.group(2) : "0";
         String patch = matcher.group(3) != null ? matcher.group(3) : "0";
-        return major + "." + minor + "." + patch;
+        String preRelease = matcher.group(4);
+        String buildMetadata = matcher.group(5);
+
+        StringBuilder normalized = new StringBuilder(major)
+                .append(".")
+                .append(minor)
+                .append(".")
+                .append(patch);
+        if (preRelease != null) {
+            normalized.append("-").append(preRelease);
+        }
+        if (buildMetadata != null) {
+            normalized.append("+").append(buildMetadata);
+        }
+        return normalized.toString();
     }
 }
