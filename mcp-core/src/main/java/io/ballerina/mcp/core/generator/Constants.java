@@ -33,6 +33,9 @@ public class Constants {
     public static final String HTTP_DELETE = "delete";
     public static final String HTTP_PATCH = "patch";
 
+    // Delimiters
+    public static final String DELIMITER = ":";
+
     // OpenAPI parameter locations
     public static final String PARAM_IN_PATH = "path";
     public static final String PARAM_IN_QUERY = "query";

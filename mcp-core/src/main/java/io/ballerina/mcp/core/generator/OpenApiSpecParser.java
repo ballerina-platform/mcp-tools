@@ -190,7 +190,7 @@ public class OpenApiSpecParser {
             for (Parameter param : pathItem.getParameters()) {
                 Parameter resolved = resolveParameter(param, openAPI);
                 if (resolved != null) {
-                    mergedParams.put(resolved.getIn() + ":" + resolved.getName(), resolved);
+                    mergedParams.put(resolved.getIn() + Constants.DELIMITER + resolved.getName(), resolved);
                 }
             }
         }
@@ -198,7 +198,7 @@ public class OpenApiSpecParser {
             for (Parameter param : operation.getParameters()) {
                 Parameter resolved = resolveParameter(param, openAPI);
                 if (resolved != null) {
-                    mergedParams.put(resolved.getIn() + ":" + resolved.getName(), resolved);
+                    mergedParams.put(resolved.getIn() + Constants.DELIMITER + resolved.getName(), resolved);
                 }
             }
         }
