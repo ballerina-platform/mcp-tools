@@ -1,0 +1,8 @@
+[package]
+org = "{{ORG}}"
+name = "{{NAME}}"
+version = "{{VERSION}}"
+distribution = "{{DISTRIBUTION}}"
+
+[build-options]
+observabilityIncluded = true
