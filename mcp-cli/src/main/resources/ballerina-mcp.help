@@ -2,7 +2,7 @@ NAME
        bal mcp - Generate a Ballerina MCP server from an API contract
 
 SYNOPSIS
-       bal mcp -i <openapi-contract> [-o <output-dir>] [--input-type openapi]
+       bal mcp -i <openapi-contract> [-o <output-dir>] [--contract-type openapi]
 
 DESCRIPTION
        Generates a Ballerina MCP (Model Context Protocol) server project
@@ -17,7 +17,7 @@ DESCRIPTION
 OPTIONS
        -i, --input          Path to the input API contract file (OpenAPI/Swagger YAML or JSON)
        -o, --output         Output directory for the generated project (default: current directory)
-       --input-type         Contract format. Supported values: openapi (default: openapi)
+       --contract-type         Contract format. Supported values: openapi (default: openapi)
        -h, --help           Print usage details of the command
 
 EXAMPLES
@@ -25,4 +25,4 @@ EXAMPLES
            $ bal mcp -i ./petstore.yaml -o ./petstore-mcp
 
        Generate an MCP server from a JSON OpenAPI contract.
-           $ bal mcp -i ./api.json -o ./my-mcp-server --input-type openapi
+           $ bal mcp -i ./api.json -o ./my-mcp-server --contract-type openapi

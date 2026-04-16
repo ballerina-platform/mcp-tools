@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  *
  * <p>Usage:
  * <pre>
- *   bal mcp -i &lt;openapi-contract&gt; -o &lt;output-dir&gt; --input-type openapi
+ *   bal mcp -i &lt;openapi-contract&gt; -o &lt;output-dir&gt; --contract-type openapi
  * </pre>
  */
 @CommandLine.Command(
@@ -68,7 +68,7 @@ public class McpCmd implements BLauncherCmd {
     private String outputPath;
 
     @CommandLine.Option(
-            names = {"--input-type"},
+            names = {"--contract-type"},
             description = "Type of the input contract. Supported values: openapi (default: openapi).",
             defaultValue = "openapi"
     )
@@ -95,7 +95,7 @@ public class McpCmd implements BLauncherCmd {
             return;
         }
 
-        // Validate --input-type
+        // Validate --contract-type
         if (!"openapi".equalsIgnoreCase(inputType)) {
             ERR.println(DiagnosticLog.error(DiagnosticCode.UNSUPPORTED_INPUT_TYPE, inputType));
             Runtime.getRuntime().exit(1);

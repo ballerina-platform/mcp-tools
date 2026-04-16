@@ -6,21 +6,21 @@ from an OpenAPI/Swagger specification.
 ## Command
 
 ```bash
-bal mcp -i <openapi-contract> -o <output-dir> --input-type openapi
+bal mcp -i <openapi-contract> -o <output-dir> --contract-type openapi
 ```
 
 ### Options
 
-| Flag             | Description                                       | Default           |
-| ---------------- | ------------------------------------------------- | ----------------- |
-| `-i`, `--input`  | Path to the OpenAPI/Swagger YAML or JSON contract | _(required)_      |
-| `-o`, `--output` | Output directory for the generated project        | `.` (current dir) |
-| `--input-type`   | Contract format: `openapi`                        | `openapi`         |
+| Flag              | Description                                       | Default           |
+| ----------------- | ------------------------------------------------- | ----------------- |
+| `-i`, `--input`   | Path to the OpenAPI/Swagger YAML or JSON contract | _(required)_      |
+| `-o`, `--output`  | Output directory for the generated project        | `.` (current dir) |
+| `--contract-type` | Contract format: `openapi`                        | `openapi`         |
 
 ### Example
 
 ```bash
-bal mcp -i ./petstore.yaml -o ./output --input-type openapi
+bal mcp -i ./petstore.yaml -o ./output --contract-type openapi
 ```
 
 ### Generated Project Structure
