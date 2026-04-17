@@ -1,10 +1,6 @@
-# Ballerina MCP Tool
+## Overview
 
-Generate a Ballerina MCP (Model Context Protocol) server project from an OpenAPI or Swagger contract.
-
-## Package Overview
-
-OpenAPI is a standard way to describe HTTP APIs, including endpoints, parameters, request bodies, and responses.
+Model Context Protocol (MCP) is a standard way to expose application capabilities as tools that AI assistants can safely discover and invoke.
 
 The Ballerina MCP Tool reads an OpenAPI contract and generates a ready-to-run Ballerina MCP server project.
 This helps you quickly expose existing REST APIs as MCP tools with less manual boilerplate.
@@ -14,7 +10,7 @@ This helps you quickly expose existing REST APIs as MCP tools with less manual b
 If the tool is not already available in your environment, pull it from Ballerina Central.
 
 ```bash
-bal tool pull mcp:0.1.0
+bal tool pull mcp:<version>
 ```
 
 ### Usage
@@ -25,12 +21,12 @@ bal mcp -i <openapi-contract> [-o <output-dir>] [--contract-type openapi]
 
 #### Command Options
 
-| Option            | Description                                               | Mandatory/Optional |
-| ----------------- | --------------------------------------------------------- | ------------------ |
-| `-i`, `--input`   | Path to the OpenAPI/Swagger YAML or JSON contract file    | Mandatory          |
-| `-o`, `--output`  | Directory where the generated MCP project will be created | Optional           |
-| `--contract-type` | Contract format (currently: `openapi`)                    | Optional           |
-| `-h`, `--help`    | Print command help                                        | Optional           |
+| Option            | Description                                                 | Mandatory/Optional |
+| ----------------- | ----------------------------------------------------------- | ------------------ |
+| `-i`, `--input`   | Path to the OpenAPI/Swagger YAML or JSON contract file      | Mandatory          |
+| `-o`, `--output`  | Directory where the generated MCP project will be created   | Optional           |
+| `--contract-type` | Type of API contract to process (currently only: `openapi`) | Optional           |
+| `-h`, `--help`    | Show command usage and available options                    | Optional           |
 
 ### Generate an MCP Server Project
 
@@ -50,6 +46,4 @@ petstore_mcp/
 └── README.md
 ```
 
-### Notes
-
-- The tool currently supports the `openapi` contract type.
+> Note: The tool currently supports only the `openapi` contract type.
