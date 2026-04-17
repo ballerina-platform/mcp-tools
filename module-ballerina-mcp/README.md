@@ -38,6 +38,8 @@ bal mcp -i <openapi-contract> [-o <output-dir>] [--contract-type openapi]
 bal mcp -i ./petstore.yaml -o ./petstore-mcp
 ```
 
+> Note: The generated project folder name is normalized at creation time to a valid Ballerina package name (lowercased, with hyphens and other non-alphanumeric characters converted to underscores). For example, a name like `petstore-mcp` becomes `petstore_mcp`. The `-o` value is the parent output path, so the created folder name may differ from the `-o` argument.
+
 If generation is successful, the output directory will contain a project similar to:
 
 ```text
