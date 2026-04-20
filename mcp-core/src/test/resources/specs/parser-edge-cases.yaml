@@ -1,0 +1,49 @@
+openapi: "3.0.0"
+info:
+  title: API 123
+  version: "v2"
+servers:
+  - url: https://{sub}.example.com/{stage}
+    variables:
+      sub:
+        default: api
+      stage:
+        default: v1
+paths:
+  /widgets/{widget-id}:
+    parameters:
+      - name: widget-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Fetch widgets
+      parameters:
+        - name: user-id
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /widgets:
+    post:
+      description: Create widget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        "201":
+          description: Created
