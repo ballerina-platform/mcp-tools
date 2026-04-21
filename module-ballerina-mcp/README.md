@@ -10,8 +10,16 @@ This helps you quickly expose existing REST APIs as MCP tools with less manual b
 If the tool is not already available in your environment, pull it from Ballerina Central.
 
 ```bash
-bal tool pull mcp:<version>
+bal tool pull mcp
 ```
+
+> Note: You can also pull a specific version of the tool.
+>
+> Example:
+>
+> ```bash
+> bal tool pull mcp:1.0.0
+> ```
 
 ### Usage
 
