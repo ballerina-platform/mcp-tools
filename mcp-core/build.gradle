@@ -49,10 +49,22 @@ dependencies {
     compileOnly files("${buildDir}/extracted-formatter/formatter-core-${ballerinaLangVersion}.jar")
     compileOnly group: 'org.ballerinalang', name: 'ballerina-lang', version: "${ballerinaLangVersion}"
 
+    testRuntimeOnly files("${buildDir}/extracted-formatter/formatter-core-${ballerinaLangVersion}.jar")
+    testRuntimeOnly(group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}") {
+        transitive = false
+    }
+    testRuntimeOnly(group: 'org.ballerinalang', name: 'ballerina-lang', version: "${ballerinaLangVersion}") {
+        transitive = false
+    }
+
     // Ballerina OpenAPI core
     implementation "io.ballerina.openapi:core:${openApiCoreVersion}"
 
     // Test
     testImplementation "org.testng:testng:${testngVersion}"
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+}
+
+test {
+    useTestNG()
 }
