@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Integration tests for {@link McpProjectGenerator} using the petstore sample spec.
@@ -109,7 +110,7 @@ public class McpProjectGeneratorTest {
 
         Path projectDir = outputPath.resolve("petstore_mcp");
 
-        ProcessBuilder pb = new ProcessBuilder("bal", "build");
+        ProcessBuilder pb = new ProcessBuilder(resolveBalExecutable(), "build");
         pb.directory(projectDir.toFile());
         pb.redirectErrorStream(true);
 
@@ -119,6 +120,27 @@ public class McpProjectGeneratorTest {
 
         Assert.assertEquals(exitCode, 0,
                 "Generated project should compile without errors. bal build output:\n" + output);
+    }
+
+    private String resolveBalExecutable() throws Exception {
+        String ballerinaHome = System.getProperty("ballerina.home");
+        Assert.assertNotNull(ballerinaHome,
+                "System property 'ballerina.home' is not set for tests");
+
+        String executableName = System.getProperty("os.name").toLowerCase().contains("windows")
+                ? "bal.bat" : "bal";
+
+        try (Stream<Path> paths = Files.walk(Paths.get(ballerinaHome))) {
+            Path balPath = paths
+                    .filter(p -> p.getFileName().toString().equals(executableName))
+                    .filter(p -> p.getParent() != null && p.getParent().getFileName().toString().equals("bin"))
+                    .findFirst()
+                    .orElse(null);
+
+            Assert.assertNotNull(balPath,
+                    "Could not find '" + executableName + "' under ballerina.home: " + ballerinaHome);
+            return balPath.toAbsolutePath().toString();
+        }
     }
 
     @Test

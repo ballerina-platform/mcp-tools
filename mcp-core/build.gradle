@@ -36,6 +36,14 @@ task extractFormatterCore(type: Copy) {
 }
 compileJava.dependsOn extractFormatterCore
 
+task extractBallerinaRuntime(type: Copy) {
+    from {
+        zipTree(configurations.jbalTools.singleFile)
+    }
+    includeEmptyDirs = false
+    into "${buildDir}/extracted-jballerina-tools"
+}
+
 dependencies {
     // Jackson for YAML and JSON parsing
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
@@ -69,6 +77,8 @@ dependencies {
 test {
     useTestNG()
     dependsOn extractFormatterCore
+    dependsOn extractBallerinaRuntime
+    systemProperty "ballerina.home", file("${buildDir}/extracted-jballerina-tools").absolutePath
 }
 
 jacocoTestReport {
