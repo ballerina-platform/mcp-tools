@@ -18,6 +18,7 @@
 plugins {
     id "com.github.spotbugs-base"
     id "com.github.johnrengelman.shadow"
+    id "net.researchgate.release" version "${releasePluginVersion}"
 }
 
 allprojects {
@@ -58,8 +59,21 @@ subprojects {
     }
 }
 
-tasks.register('build') {
+tasks.named('build') {
     dependsOn(":mcp-cli:build")
     dependsOn(":mcp-core:build")
     dependsOn(":module-ballerina-mcp:build")
+}
+
+def moduleVersion = project.version.replace("-SNAPSHOT", "")
+
+release {
+    buildTasks = ['build']
+    failOnSnapshotDependencies = true
+    versionPropertyFile = 'gradle.properties'
+    tagTemplate = 'v${version}'
+    git {
+        requireBranch.set("release-${moduleVersion}")
+        pushToRemote.set('origin')
+    }
 }
