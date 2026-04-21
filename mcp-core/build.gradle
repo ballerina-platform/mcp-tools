@@ -18,6 +18,7 @@
 
 plugins {
     id 'java-library'
+    id 'jacoco'
 }
 
 description = 'Ballerina MCP Tools - Core Generation Library'
@@ -68,4 +69,12 @@ dependencies {
 test {
     useTestNG()
     dependsOn extractFormatterCore
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }
