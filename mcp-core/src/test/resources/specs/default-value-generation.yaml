@@ -1,0 +1,24 @@
+openapi: "3.0.0"
+info:
+  title: Default Values API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:9098
+paths:
+  /reports:
+    get:
+      operationId: listReports
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            default: summary
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: OK
