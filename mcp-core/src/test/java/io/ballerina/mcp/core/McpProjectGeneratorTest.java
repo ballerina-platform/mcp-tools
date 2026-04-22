@@ -30,6 +30,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -147,7 +149,7 @@ public class McpProjectGeneratorTest {
         Path balExecutable = findBalExecutable(Paths.get(ballerinaHome));
         Assert.assertNotNull(balExecutable, "Ballerina executable should exist under ballerina.home");
 
-        ProcessBuilder pb = new ProcessBuilder(balExecutable.toString(), "build");
+        ProcessBuilder pb = new ProcessBuilder(buildBalBuildCommand(balExecutable));
         pb.directory(projectDir.toFile());
         pb.redirectErrorStream(true);
 
@@ -169,12 +171,34 @@ public class McpProjectGeneratorTest {
     }
 
         private Path findBalExecutable(Path ballerinaHome) throws Exception {
+                String os = System.getProperty("os.name").toLowerCase();
+                String preferred = os.contains("win") ? "bal.bat" : "bal";
+                String fallback = os.contains("win") ? "bal" : "bal.bat";
+
+                try (Stream<Path> pathStream = Files.walk(ballerinaHome)) {
+                        Path preferredPath = pathStream
+                                        .filter(Files::isRegularFile)
+                                        .filter(path -> {
+                                                String fileName = path.getFileName().toString();
+                                                return fileName.equals(preferred);
+                                        })
+                                        .filter(path -> path.getParent() != null
+                                                        && path.getParent().getFileName() != null
+                                                        && path.getParent().getFileName().toString().equals("bin"))
+                                        .findFirst()
+                                        .orElse(null);
+
+                        if (preferredPath != null) {
+                                return preferredPath;
+                        }
+                }
+
                 try (Stream<Path> pathStream = Files.walk(ballerinaHome)) {
                         return pathStream
                                         .filter(Files::isRegularFile)
                                         .filter(path -> {
                                                 String fileName = path.getFileName().toString();
-                                                return fileName.equals("bal") || fileName.equals("bal.bat");
+                                                return fileName.equals(fallback);
                                         })
                                         .filter(path -> path.getParent() != null
                                                         && path.getParent().getFileName() != null
@@ -206,5 +230,27 @@ public class McpProjectGeneratorTest {
 
         private String normalize(String content) {
                 return content.replace("\r\n", "\n").trim();
+        }
+
+        private List<String> buildBalBuildCommand(Path balExecutable) throws Exception {
+                String os = System.getProperty("os.name").toLowerCase();
+                List<String> command = new ArrayList<>();
+
+                if (os.contains("win")) {
+                        command.add(balExecutable.toString());
+                        command.add("build");
+                        return command;
+                }
+
+                if (Files.isExecutable(balExecutable)) {
+                        command.add(balExecutable.toString());
+                        command.add("build");
+                        return command;
+                }
+
+                command.add("sh");
+                command.add(balExecutable.toString());
+                command.add("build");
+                return command;
         }
 }
