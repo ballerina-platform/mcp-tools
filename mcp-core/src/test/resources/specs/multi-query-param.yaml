@@ -11,14 +11,17 @@ paths:
       parameters:
         - name: q
           in: query
+          required: true
           schema:
             type: string
         - name: page
           in: query
+          required: true
           schema:
             type: integer
         - name: page_size
           in: query
+          required: true
           schema:
             type: integer
       responses:
