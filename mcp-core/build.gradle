@@ -59,12 +59,11 @@ dependencies {
     compileOnly group: 'org.ballerinalang', name: 'ballerina-lang', version: "${ballerinaLangVersion}"
 
     testRuntimeOnly files("${buildDir}/extracted-formatter/formatter-core-${ballerinaLangVersion}.jar")
-    testRuntimeOnly(group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}") {
-        transitive = false
-    }
-    testRuntimeOnly(group: 'org.ballerinalang', name: 'ballerina-lang', version: "${ballerinaLangVersion}") {
-        transitive = false
-    }
+    testRuntimeOnly "com.github.zafarkhaja:java-semver:0.9.0"
+    testRuntimeOnly files({
+        fileTree("${buildDir}/extracted-jballerina-tools/jballerina-tools-${ballerinaLangVersion}/bre/lib")
+            .matching { include "*.jar" }
+    })
 
     // Ballerina OpenAPI core
     implementation "io.ballerina.openapi:core:${openApiCoreVersion}"
@@ -72,13 +71,16 @@ dependencies {
     // Test
     testImplementation "org.testng:testng:${testngVersion}"
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation("org.ballerinalang:ballerina-lang:${ballerinaLangVersion}") { transitive = false }
+    testImplementation("org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}") { transitive = false }
+    testImplementation("org.ballerinalang:ballerina-tools-api:${ballerinaLangVersion}") { transitive = false }
 }
 
 test {
     useTestNG()
     dependsOn extractFormatterCore
     dependsOn extractBallerinaRuntime
-    systemProperty "ballerina.home", file("${buildDir}/extracted-jballerina-tools").absolutePath
+    systemProperty "ballerina.home", file("${buildDir}/extracted-jballerina-tools/jballerina-tools-${ballerinaLangVersion}").absolutePath
 }
 
 jacocoTestReport {

@@ -21,13 +21,17 @@ package io.ballerina.mcp.core;
 import io.ballerina.mcp.core.generator.GeneratorOptions;
 import io.ballerina.mcp.core.generator.GeneratorUtils;
 import io.ballerina.mcp.core.generator.McpProjectGenerator;
+import io.ballerina.projects.Project;
+import io.ballerina.projects.ProjectEnvironmentBuilder;
+import io.ballerina.projects.directory.BuildProject;
+import io.ballerina.projects.PackageCompilation;
+import io.ballerina.projects.DiagnosticResult;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -170,22 +174,17 @@ public class McpProjectGeneratorTest {
         new McpProjectGenerator(new GeneratorOptions(inputPath, outputPath, "openapi")).generate();
 
         Path projectDir = outputPath.resolve("petstore_mcp");
-        String ballerinaHome = System.getProperty("ballerina.home");
-        Assert.assertNotNull(ballerinaHome, "ballerina.home system property should be set for tests");
 
-        Path balExecutable = findBalExecutable(Paths.get(ballerinaHome));
-        Assert.assertNotNull(balExecutable, "Ballerina executable should exist under ballerina.home");
+        ProjectEnvironmentBuilder envBuilder = ProjectEnvironmentBuilder.getDefaultBuilder();
 
-        ProcessBuilder pb = new ProcessBuilder(buildBalBuildCommand(balExecutable));
-        pb.directory(projectDir.toFile());
-        pb.redirectErrorStream(true);
-
-        Process process = pb.start();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        int exitCode = process.waitFor();
-
-        Assert.assertEquals(exitCode, 0,
-                "Generated project should compile without errors. bal build output:\n" + output);
+        Project project = BuildProject.load(envBuilder, projectDir);
+        PackageCompilation compilation = project.currentPackage().getCompilation();
+        DiagnosticResult diagnostics = compilation.diagnosticResult();
+        diagnostics.diagnostics().forEach(d ->
+                System.out.println(d.toString())
+        );
+        Assert.assertFalse(diagnostics.hasErrors(),
+                "Generated project should compile without errors.");
     }
 
     @Test
@@ -196,44 +195,6 @@ public class McpProjectGeneratorTest {
         Assert.assertEquals(GeneratorUtils.derivePackageName(null), "mcp_server");
         Assert.assertEquals(GeneratorUtils.derivePackageName("123 API"), "_123_api_mcp");
     }
-
-        private Path findBalExecutable(Path ballerinaHome) throws Exception {
-                String os = System.getProperty("os.name").toLowerCase();
-                String preferred = os.contains("win") ? "bal.bat" : "bal";
-                String fallback = os.contains("win") ? "bal" : "bal.bat";
-
-                try (Stream<Path> pathStream = Files.walk(ballerinaHome)) {
-                        Path preferredPath = pathStream
-                                        .filter(Files::isRegularFile)
-                                        .filter(path -> {
-                                                String fileName = path.getFileName().toString();
-                                                return fileName.equals(preferred);
-                                        })
-                                        .filter(path -> path.getParent() != null
-                                                        && path.getParent().getFileName() != null
-                                                        && path.getParent().getFileName().toString().equals("bin"))
-                                        .findFirst()
-                                        .orElse(null);
-
-                        if (preferredPath != null) {
-                                return preferredPath;
-                        }
-                }
-
-                try (Stream<Path> pathStream = Files.walk(ballerinaHome)) {
-                        return pathStream
-                                        .filter(Files::isRegularFile)
-                                        .filter(path -> {
-                                                String fileName = path.getFileName().toString();
-                                                return fileName.equals(fallback);
-                                        })
-                                        .filter(path -> path.getParent() != null
-                                                        && path.getParent().getFileName() != null
-                                                        && path.getParent().getFileName().toString().equals("bin"))
-                                        .findFirst()
-                                        .orElse(null);
-                }
-        }
 
         private Path findGeneratedProjectDir(Path outputPath) throws Exception {
                 try (Stream<Path> pathStream = Files.list(outputPath)) {
@@ -257,27 +218,5 @@ public class McpProjectGeneratorTest {
 
         private String normalize(String content) {
                 return content.replace("\r\n", "\n").trim();
-        }
-
-        private List<String> buildBalBuildCommand(Path balExecutable) throws Exception {
-                String os = System.getProperty("os.name").toLowerCase();
-                List<String> command = new ArrayList<>();
-
-                if (os.contains("win")) {
-                        command.add(balExecutable.toString());
-                        command.add("build");
-                        return command;
-                }
-
-                if (Files.isExecutable(balExecutable)) {
-                        command.add(balExecutable.toString());
-                        command.add("build");
-                        return command;
-                }
-
-                command.add("sh");
-                command.add(balExecutable.toString());
-                command.add("build");
-                return command;
         }
 }
