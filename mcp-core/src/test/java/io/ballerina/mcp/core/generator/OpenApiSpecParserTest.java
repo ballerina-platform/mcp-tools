@@ -19,13 +19,19 @@
 package io.ballerina.mcp.core.generator;
 
 import io.ballerina.mcp.core.model.SpecInfo;
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * Unit tests for {@link OpenApiSpecParser} across YAML and JSON fixtures.
@@ -46,7 +52,9 @@ public class OpenApiSpecParserTest {
                 {"specs/ref-query-parameters.yaml", "specs/ref-query-parameters.json"},
                 {"specs/multi-method-resources.yaml", "specs/multi-method-resources.json"},
                 {"specs/default-value-generation.yaml", "specs/default-value-generation.json"},
-                {"specs/empty-paths.yaml", "specs/empty-paths.json"}
+                {"specs/empty-paths.yaml", "specs/empty-paths.json"},
+                {"specs/path-level-params.yaml", "specs/path-level-params.json"},
+                {"specs/blank-server-url.yaml", "specs/blank-server-url.json"}
         };
     }
 
@@ -71,6 +79,101 @@ public class OpenApiSpecParserTest {
             Assert.assertEquals(jsonSpec.getEndpoints().get(i).getPath(),
                     yamlSpec.getEndpoints().get(i).getPath(), "Path mismatch at endpoint index " + i);
         }
+    }
+
+    // ── Unsupported file type ──────────────────────────────────────────
+    @Test
+    public void testParseUnsupportedFileTypeThrowsException() throws Exception {
+        Path txtFile = Files.createTempFile("spec", ".txt");
+        try {
+            new OpenApiSpecParser().parse(txtFile);
+            Assert.fail("Expected McpGenerationException");
+        } catch (McpGenerationException e) {
+            Assert.assertTrue(e.getMessage().contains("Unsupported file type"));
+        } finally {
+            Files.deleteIfExists(txtFile);
+        }
+    }
+
+    // ── Invalid/unparseable spec ───────────────────────────────────────
+    @Test
+    public void testParseInvalidSpecThrowsException() throws Exception {
+        Path invalidSpec = Files.createTempFile("invalid", ".yaml");
+        Files.writeString(invalidSpec, "this: is: not: valid: openapi");
+        try {
+            new OpenApiSpecParser().parse(invalidSpec);
+            Assert.fail("Expected McpGenerationException");
+        } catch (McpGenerationException e) {
+            Assert.assertTrue(e.getMessage().contains("Failed to parse OpenAPI spec"));
+        } finally {
+            Files.deleteIfExists(invalidSpec);
+        }
+    }
+
+    // ── Server URL blank falls back to default ─────────────────────────
+    @Test
+    public void testParseSpecWithBlankServerUrlFallsBackToDefault() throws Exception {
+        SpecInfo result = new OpenApiSpecParser().parse(resolveResourcePath("specs/blank-server-url.yaml"));
+        Assert.assertEquals(result.getBaseUrl(), "http://localhost:8080");
+    }
+
+    // ── pathItem.getParameters() not null ─────────────────────────────
+    @Test
+    public void testParseSpecWithPathLevelParameters() throws Exception {
+        SpecInfo result = new OpenApiSpecParser().parse(resolveResourcePath("specs/path-level-params.yaml"));
+        Assert.assertFalse(result.getEndpoints().isEmpty());
+        Assert.assertFalse(result.getEndpoints().get(0).getParameters().isEmpty());
+    }
+
+    // ── Unresolvable $ref in parameters does not cause failure ─────────
+    @Test
+    public void testParseSpecWithUnresolvableRefParameter() throws Exception {
+        SpecInfo result = new OpenApiSpecParser().parse(resolveResourcePath("specs/unresolvable-ref-param.yaml"));
+        Assert.assertNotNull(result.getEndpoints());
+    }
+
+    // ── schemaToBalType branches ───────────────────────────────────────
+    @Test
+    public void testSchemaToBalTypeWithNullSchema() {
+        Assert.assertEquals(OpenApiSpecParser.schemaToBalType(null), "json");
+    }
+
+    @Test
+    public void testSchemaToBalTypeWithRefSchema() {
+        Schema<?> refSchema = new Schema<>();
+        refSchema.set$ref("#/components/schemas/Pet");
+        Assert.assertEquals(OpenApiSpecParser.schemaToBalType(refSchema), "Pet");
+    }
+
+    @Test
+    public void testSchemaToBalTypeWithArraySchema() {
+        ArraySchema arraySchema = new ArraySchema();
+        arraySchema.setItems(new StringSchema());
+        Assert.assertEquals(OpenApiSpecParser.schemaToBalType(arraySchema), "string[]");
+    }
+
+    @Test
+    public void testSchemaToBalTypeWithArraySchemaNoItems() {
+        ArraySchema arraySchema = new ArraySchema();
+        Assert.assertEquals(OpenApiSpecParser.schemaToBalType(arraySchema), "json[]");
+    }
+
+    // ── effectiveType with OAS 3.1 types set ──────────────────────────
+    @Test
+    public void testSchemaToBalTypeWithOas31TypesSet() {
+        Schema<?> schema = new Schema<>();
+        schema.setTypes(new LinkedHashSet<>(List.of("integer")));
+        String result = OpenApiSpecParser.schemaToBalType(schema);
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    public void testSchemaToBalTypeWithOas31EmptyTypesSet() {
+        Schema<?> schema = new Schema<>();
+        schema.setTypes(new LinkedHashSet<>());
+        String result = OpenApiSpecParser.schemaToBalType(schema);
+        Assert.assertNotNull(result);
     }
 
     private Path resolveResourcePath(String resourceName) throws Exception {
