@@ -23,6 +23,7 @@ import io.ballerina.mcp.core.generator.GeneratorUtils;
 import io.ballerina.mcp.core.generator.McpProjectGenerator;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.URL;
@@ -33,11 +34,37 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import java.io.IOException;
+import java.util.Comparator;
 
 /**
  * Integration tests for {@link McpProjectGenerator} using the petstore sample spec.
  */
 public class McpProjectGeneratorTest {
+
+        private final List<Path> tempDirs = new ArrayList<>();
+
+        @AfterMethod
+        public void tearDown() {
+        for (Path tempDir : tempDirs) {
+                try {
+                if (Files.exists(tempDir)) {
+                        Files.walk(tempDir)
+                                .sorted(Comparator.reverseOrder())
+                                .forEach(path -> {
+                                try {
+                                        Files.delete(path);
+                                } catch (IOException e) {
+                                        // ignore cleanup errors
+                                }
+                                });
+                }
+                } catch (IOException e) {
+                // ignore cleanup errors
+                }
+        }
+        tempDirs.clear();
+        }
 
         @DataProvider(name = "petstoreSpecs")
         public Object[][] petstoreSpecs() {
@@ -54,6 +81,7 @@ public class McpProjectGeneratorTest {
 
         Path inputPath = Paths.get(resource.toURI());
         Path outputPath = Files.createTempDirectory("mcp-gen-test-");
+        tempDirs.add(outputPath);
 
         GeneratorOptions options = new GeneratorOptions(inputPath, outputPath, "openapi");
         McpProjectGenerator generator = new McpProjectGenerator(options);
@@ -124,6 +152,7 @@ public class McpProjectGeneratorTest {
 
                 Path inputPath = Paths.get(resource.toURI());
                 Path outputPath = Files.createTempDirectory("mcp-golden-test-");
+                tempDirs.add(outputPath);
 
                 new McpProjectGenerator(new GeneratorOptions(inputPath, outputPath, "openapi")).generate();
 
@@ -139,6 +168,7 @@ public class McpProjectGeneratorTest {
 
         Path inputPath = Paths.get(resource.toURI());
         Path outputPath = Files.createTempDirectory("mcp-compile-test-");
+        tempDirs.add(outputPath); 
 
         new McpProjectGenerator(new GeneratorOptions(inputPath, outputPath, "openapi")).generate();
 
