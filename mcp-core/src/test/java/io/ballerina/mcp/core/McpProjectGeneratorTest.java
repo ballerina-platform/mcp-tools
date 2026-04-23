@@ -49,18 +49,17 @@ public class McpProjectGeneratorTest {
         for (Path tempDir : tempDirs) {
                 try {
                 if (Files.exists(tempDir)) {
-                        Files.walk(tempDir)
-                                .sorted(Comparator.reverseOrder())
+                        try (Stream<Path> walk = Files.walk(tempDir)) {
+                        walk.sorted(Comparator.reverseOrder())
                                 .forEach(path -> {
-                                try {
+                                        try {
                                         Files.delete(path);
-                                } catch (IOException e) {
-                                        // ignore cleanup errors
-                                }
+                                        } catch (IOException e) {
+                                        }
                                 });
+                        }
                 }
                 } catch (IOException e) {
-                // ignore cleanup errors
                 }
         }
         tempDirs.clear();
