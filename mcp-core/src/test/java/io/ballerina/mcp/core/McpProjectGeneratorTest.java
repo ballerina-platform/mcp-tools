@@ -45,21 +45,19 @@ public class McpProjectGeneratorTest {
         private final List<Path> tempDirs = new ArrayList<>();
 
         @AfterMethod
-        public void tearDown() {
+        public void tearDown() throws IOException {
         for (Path tempDir : tempDirs) {
-                try {
                 if (Files.exists(tempDir)) {
-                        try (Stream<Path> walk = Files.walk(tempDir)) {
+                try (Stream<Path> walk = Files.walk(tempDir)) {
                         walk.sorted(Comparator.reverseOrder())
                                 .forEach(path -> {
-                                        try {
+                                try {
                                         Files.delete(path);
-                                        } catch (IOException e) {
-                                        }
+                                } catch (IOException e) {
+                                        throw new RuntimeException("Failed to delete temp file: " + path, e);
+                                }
                                 });
-                        }
                 }
-                } catch (IOException e) {
                 }
         }
         tempDirs.clear();
