@@ -1,5 +1,10 @@
 # Ballerina MCP Tools
 
+[![Build](https://github.com/ballerina-platform/mcp-tools/actions/workflows/build-timestamped-master.yml/badge.svg)](https://github.com/ballerina-platform/mcp-tools/actions/workflows/build-timestamped-master.yml)
+[![codecov](https://codecov.io/gh/ballerina-platform/mcp-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/mcp-tools)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/mcp-tools.svg)](https://github.com/ballerina-platform/mcp-tools/commits/master)
+[![GitHub issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/mcp-tools.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-library/labels/module%2Fmcp-tools)
+
 A Ballerina CLI tool that generates a Ballerina MCP (Model Context Protocol) server project
 from an OpenAPI/Swagger specification.
 
