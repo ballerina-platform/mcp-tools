@@ -1,0 +1,29 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Unresolved Server API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://{region}.example.com/v1",
+      "variables": {
+        "region": {
+          "description": "Region placeholder intentionally without default"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/status": {
+      "get": {
+        "operationId": "getStatus",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}

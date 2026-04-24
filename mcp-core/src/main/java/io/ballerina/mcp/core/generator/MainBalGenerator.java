@@ -43,7 +43,7 @@ public class MainBalGenerator {
      */
     public String generate(SpecInfo spec) throws McpGenerationException {
         try {
-            String port = spec.getPort() > 0 ? String.valueOf(spec.getPort()) : Constants.DEFAULT_MCP_PORT;
+            String port = Constants.DEFAULT_MCP_PORT;
             String servicePath = deriveServicePath(spec.getTitle());
             String remoteFunctions = buildRemoteFunctions(spec.getEndpoints());
 

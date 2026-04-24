@@ -1,0 +1,13 @@
+openapi: "3.0.0"
+info:
+  title: Test
+  version: "1.0"
+paths:
+  /pets:
+    get:
+      summary: List pets
+      parameters:
+        - $ref: "#/components/parameters/NonExistent"
+      responses:
+        "200":
+          description: OK

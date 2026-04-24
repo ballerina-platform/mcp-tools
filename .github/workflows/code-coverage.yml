@@ -1,0 +1,40 @@
+name: Code Coverage
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: Run Coverage (Ubuntu)
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'ballerina-platform' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21.0.3"
+
+      - name: Run tests with JaCoCo report
+        env:
+          packageUser: ${{ github.actor }}
+          packagePAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew :mcp-core:test :mcp-core:jacocoTestReport --stacktrace --console=plain --no-daemon
+
+      - name: Upload JaCoCo XML to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./mcp-core/build/reports/jacoco/test/jacocoTestReport.xml
+          fail_ci_if_error: true
+          verbose: true
