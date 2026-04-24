@@ -10,7 +10,7 @@ distribution-version = "2201.12.0"
 [[package]]
 org = "ballerina"
 name = "tool_mcp"
-version = "0.1.0"
+version = "1.0.0"
 modules = [
 	{org = "ballerina", packageName = "tool_mcp", moduleName = "tool_mcp"}
 ]
