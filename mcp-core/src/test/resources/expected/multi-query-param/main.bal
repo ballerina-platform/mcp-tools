@@ -5,13 +5,13 @@ import ballerina/http;
 http:Client apiClient = check new ("http://localhost:9094");
 listener mcp:StreamableHttpListener mcpListener = check new (9090);
 
-@mcp:ServiceConfig {
+@mcp:StreamableHttpServiceConfig {
     info: {
         name: "Multi Query API",
         version: "1.0.0"
     }
 }
-service mcp:Service /multi_query_api on mcpListener {
+service mcp:StreamableHttpService /multi_query_api on mcpListener {
 
     @mcp:Tool {
         description: "Executes GET on /search"

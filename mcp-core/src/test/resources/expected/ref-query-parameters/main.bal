@@ -5,13 +5,13 @@ import ballerina/http;
 http:Client apiClient = check new ("http://localhost:9096");
 listener mcp:StreamableHttpListener mcpListener = check new (9090);
 
-@mcp:ServiceConfig {
+@mcp:StreamableHttpServiceConfig {
     info: {
         name: "Ref Query Params API",
         version: "1.0.0"
     }
 }
-service mcp:Service /ref_query_params_api on mcpListener {
+service mcp:StreamableHttpService /ref_query_params_api on mcpListener {
 
     @mcp:Tool {
         description: "Executes GET on /pets"

@@ -5,12 +5,12 @@ import ballerina/http;
 http:Client apiClient = check new ("{{BASE_URL}}");
 listener mcp:StreamableHttpListener mcpListener = check new ({{PORT}});
 
-@mcp:ServiceConfig {
+@mcp:StreamableHttpServiceConfig {
     info: {
         name: "{{TITLE}}",
         version: "{{VERSION}}"
     }
 }
-service mcp:Service /{{SERVICE_PATH}} on mcpListener {
+service mcp:StreamableHttpService /{{SERVICE_PATH}} on mcpListener {
 {{REMOTE_FUNCTIONS}}
 }

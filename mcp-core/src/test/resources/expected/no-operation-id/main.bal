@@ -5,13 +5,13 @@ import ballerina/http;
 http:Client apiClient = check new ("http://localhost:9093");
 listener mcp:StreamableHttpListener mcpListener = check new (9090);
 
-@mcp:ServiceConfig {
+@mcp:StreamableHttpServiceConfig {
     info: {
         name: "No Operation Id API",
         version: "1.0.0"
     }
 }
-service mcp:Service /no_operation_id_api on mcpListener {
+service mcp:StreamableHttpService /no_operation_id_api on mcpListener {
 
     @mcp:Tool {
         description: "List users"
