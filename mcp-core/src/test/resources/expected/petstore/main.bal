@@ -3,15 +3,15 @@ import ballerina/mcp;
 import ballerina/http;
 
 http:Client apiClient = check new ("https://petstore.example.com/v1");
-listener mcp:Listener mcpListener = check new (9090);
+listener mcp:StreamableHttpListener mcpListener = check new (9090);
 
-@mcp:ServiceConfig {
+@mcp:StreamableHttpServiceConfig {
     info: {
         name: "Petstore",
         version: "1.0.0"
     }
 }
-service mcp:Service /petstore on mcpListener {
+service mcp:StreamableHttpService /petstore on mcpListener {
 
     @mcp:Tool {
         description: "List all pets"

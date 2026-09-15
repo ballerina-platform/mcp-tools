@@ -3,15 +3,15 @@ import ballerina/mcp;
 import ballerina/http;
 
 http:Client apiClient = check new ("http://localhost:9091");
-listener mcp:Listener mcpListener = check new (9091);
+listener mcp:StreamableHttpListener mcpListener = check new (9091);
 
-@mcp:ServiceConfig {
+@mcp:StreamableHttpServiceConfig {
     info: {
         name: "Minimal API",
         version: "1.0.0"
     }
 }
-service mcp:Service /minimal_api on mcpListener {
+service mcp:StreamableHttpService /minimal_api on mcpListener {
 
     @mcp:Tool {
         description: "Health check"
