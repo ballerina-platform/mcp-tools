@@ -3,7 +3,7 @@ import ballerina/mcp;
 import ballerina/http;
 
 http:Client apiClient = check new ("http://localhost:9091");
-listener mcp:Listener mcpListener = check new (9091);
+listener mcp:StreamableHttpListener mcpListener = check new (9091);
 
 @mcp:ServiceConfig {
     info: {

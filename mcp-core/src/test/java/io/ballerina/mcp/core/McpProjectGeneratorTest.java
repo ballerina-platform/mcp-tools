@@ -105,7 +105,7 @@ public class McpProjectGeneratorTest {
         Assert.assertTrue(mainBal.contains("import ballerina/mcp;"), "Should import mcp");
         Assert.assertTrue(mainBal.contains("import ballerina/http;"), "Should import http");
         Assert.assertTrue(mainBal.contains("import ballerina/log;"), "Should import log");
-        Assert.assertTrue(mainBal.contains("mcp:Listener mcpListener"), "Should declare mcp listener");
+        Assert.assertTrue(mainBal.contains("mcp:StreamableHttpListener mcpListener"), "Should declare mcp listener");
         Assert.assertTrue(mainBal.contains("@mcp:ServiceConfig"), "Should have service config");
         Assert.assertTrue(mainBal.contains("service mcp:Service"), "Should declare mcp service");
         Assert.assertTrue(mainBal.contains("remote function listPets"), "Should generate listPets function");
