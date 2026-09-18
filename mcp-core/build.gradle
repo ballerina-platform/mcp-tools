@@ -91,13 +91,19 @@ jacocoTestReport {
     }
 }
 
+jar {
+    manifest {
+        attributes 'Automatic-Module-Name': 'io.ballerina.mcp.core'
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             groupId "io.ballerina"
             artifactId "mcp-core"
             version = project.version
-            artifact jar
+            from components.java
         }
     }
 
