@@ -16,10 +16,17 @@
  * under the License.
  */
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
 
 plugins {
     id 'io.ballerina.plugin'
 }
+
+abstract class ExecHelper {
+    @Inject
+    abstract ExecOperations getExecOperations()
+}
+def execHelper = project.objects.newInstance(ExecHelper)
 
 description = 'Ballerina - MCP Tool'
 
@@ -91,7 +98,7 @@ task commitTomlFiles {
         if (System.getenv("CI") == null) {
             return
         }
-        project.exec {
+        execHelper.execOperations.exec {
             ignoreExitValue true
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                 commandLine 'cmd', '/c', "git commit -m \"[Automated] Update the Ballerina.toml files\" ${ballerinaTomlFile} ${balToolTomlFile}"
