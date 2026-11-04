@@ -1,16 +1,16 @@
 import ballerina/log;
-import ballerina/mcp;
+import ballerina/mcp.v2 as mcpv2;
 import ballerina/http;
 
 http:Client apiClient = check new ("{{BASE_URL}}");
-listener mcp:StreamableHttpListener mcpListener = check new ({{PORT}});
+listener mcpv2:StreamableHttpListener mcpListener = check new ({{PORT}});
 
-@mcp:StreamableHttpServiceConfig {
+@mcpv2:StreamableHttpServiceConfig {
     info: {
         name: "{{TITLE}}",
         version: "{{VERSION}}"
     }
 }
-service mcp:StreamableHttpService /{{SERVICE_PATH}} on mcpListener {
+service mcpv2:StreamableHttpService /{{SERVICE_PATH}} on mcpListener {
 {{REMOTE_FUNCTIONS}}
 }

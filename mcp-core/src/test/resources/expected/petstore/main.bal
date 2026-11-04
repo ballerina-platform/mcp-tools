@@ -1,19 +1,19 @@
 import ballerina/log;
-import ballerina/mcp;
+import ballerina/mcp.v2 as mcpv2;
 import ballerina/http;
 
 http:Client apiClient = check new ("https://petstore.example.com/v1");
-listener mcp:StreamableHttpListener mcpListener = check new (9090);
+listener mcpv2:StreamableHttpListener mcpListener = check new (9090);
 
-@mcp:StreamableHttpServiceConfig {
+@mcpv2:StreamableHttpServiceConfig {
     info: {
         name: "Petstore",
         version: "1.0.0"
     }
 }
-service mcp:StreamableHttpService /petstore on mcpListener {
+service mcpv2:StreamableHttpService /petstore on mcpListener {
 
-    @mcp:Tool {
+    @mcpv2:Tool {
         description: "List all pets"
     }
     remote function listPets() returns Pet[]|error {
@@ -22,7 +22,7 @@ service mcp:StreamableHttpService /petstore on mcpListener {
         return response;
     }
 
-    @mcp:Tool {
+    @mcpv2:Tool {
         description: "Create a pet"
     }
     remote function createPet(NewPet payload) returns Pet|error {
@@ -31,7 +31,7 @@ service mcp:StreamableHttpService /petstore on mcpListener {
         return response;
     }
 
-    @mcp:Tool {
+    @mcpv2:Tool {
         description: "Info for a specific pet"
     }
     remote function showPetById(int petId) returns Pet|error {
@@ -40,7 +40,7 @@ service mcp:StreamableHttpService /petstore on mcpListener {
         return response;
     }
 
-    @mcp:Tool {
+    @mcpv2:Tool {
         description: "Delete a pet"
     }
     remote function deletePet(int petId) returns string|error {

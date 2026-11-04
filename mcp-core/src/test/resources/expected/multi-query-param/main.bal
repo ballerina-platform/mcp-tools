@@ -1,19 +1,19 @@
 import ballerina/log;
-import ballerina/mcp;
+import ballerina/mcp.v2 as mcpv2;
 import ballerina/http;
 
 http:Client apiClient = check new ("http://localhost:9094");
-listener mcp:StreamableHttpListener mcpListener = check new (9090);
+listener mcpv2:StreamableHttpListener mcpListener = check new (9090);
 
-@mcp:StreamableHttpServiceConfig {
+@mcpv2:StreamableHttpServiceConfig {
     info: {
         name: "Multi Query API",
         version: "1.0.0"
     }
 }
-service mcp:StreamableHttpService /multi_query_api on mcpListener {
+service mcpv2:StreamableHttpService /multi_query_api on mcpListener {
 
-    @mcp:Tool {
+    @mcpv2:Tool {
         description: "Executes GET on /search"
     }
     remote function searchItems(string q, int page, int pageSize) returns json|error {

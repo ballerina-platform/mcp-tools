@@ -65,7 +65,7 @@ public final class EndpointInfo {
     /** Generated or extracted function/tool name. */
     public String getToolName() { return toolName; }
 
-    /** Human-readable description for the {@code @mcp:Tool} annotation. */
+    /** Human-readable description for the {@code @mcpv2:Tool} annotation. */
     public String getDescription() { return description; }
 
     /** List of path parameters with their Ballerina types. */

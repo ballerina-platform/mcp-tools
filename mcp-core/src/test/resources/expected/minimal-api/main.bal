@@ -1,19 +1,19 @@
 import ballerina/log;
-import ballerina/mcp;
+import ballerina/mcp.v2 as mcpv2;
 import ballerina/http;
 
 http:Client apiClient = check new ("http://localhost:9091");
-listener mcp:StreamableHttpListener mcpListener = check new (9091);
+listener mcpv2:StreamableHttpListener mcpListener = check new (9091);
 
-@mcp:StreamableHttpServiceConfig {
+@mcpv2:StreamableHttpServiceConfig {
     info: {
         name: "Minimal API",
         version: "1.0.0"
     }
 }
-service mcp:StreamableHttpService /minimal_api on mcpListener {
+service mcpv2:StreamableHttpService /minimal_api on mcpListener {
 
-    @mcp:Tool {
+    @mcpv2:Tool {
         description: "Health check"
     }
     remote function getHealth() returns record {}|error {

@@ -90,7 +90,7 @@ public class MainBalGenerator {
     private void appendRemoteFunction(StringBuilder sb, EndpointInfo endpoint) {
         sb.append(NL);
 
-        sb.append(INDENT).append("@mcp:Tool {").append(NL);
+        sb.append(INDENT).append("@mcpv2:Tool {").append(NL);
         sb.append(INDENT).append(INDENT).append("description: \"")
                 .append(escapeString(endpoint.getDescription())).append("\"").append(NL);
         sb.append(INDENT).append("}").append(NL);
