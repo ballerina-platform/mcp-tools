@@ -35,10 +35,11 @@ public final class EndpointInfo {
     private final List<ParameterInfo> queryParameters;
     private final String bodyType;
     private final String returnType;
+    private final String bodyDescription;
 
     public EndpointInfo(String path, String balPath, String method, String toolName,
                         String description, List<ParameterInfo> parameters, List<ParameterInfo> queryParameters,
-                        String bodyType, String returnType) {
+                        String bodyType, String bodyDescription, String returnType) {
         this.path = path;
         this.balPath = balPath;
         this.method = method;
@@ -47,6 +48,7 @@ public final class EndpointInfo {
         this.parameters = parameters;
         this.queryParameters = queryParameters;
         this.bodyType = bodyType;
+        this.bodyDescription = bodyDescription;
         this.returnType = returnType;
     }
 
@@ -65,7 +67,7 @@ public final class EndpointInfo {
     /** Generated or extracted function/tool name. */
     public String getToolName() { return toolName; }
 
-    /** Human-readable description for the {@code @mcp:Tool} annotation. */
+    /** Human-readable tool description, emitted as the remote function's doc comment. */
     public String getDescription() { return description; }
 
     /** List of path parameters with their Ballerina types. */
@@ -78,6 +80,9 @@ public final class EndpointInfo {
      * Ballerina type of the request body, or {@code null} if no body.
      */
     public String getBodyType() { return bodyType; }
+
+    /** Request body description from the spec, or {@code null} if it has none. */
+    public String getBodyDescription() { return bodyDescription; }
 
     /** Ballerina return type derived from the first 2xx response. */
     public String getReturnType() { return returnType; }

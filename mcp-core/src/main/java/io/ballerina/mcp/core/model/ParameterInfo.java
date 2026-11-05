@@ -27,24 +27,30 @@ public final class ParameterInfo {
     private final String safeName;
     private final String balType;
     private final String location;
+    private final String description;
 
     /**
      * @param originalName original parameter name from the spec
      * @param safeName     sanitized Ballerina identifier
      * @param balType      Ballerina type string (int, string, boolean, decimal, json)
      * @param location     parameter location: "path", "query", "header", "body"
+     * @param description  parameter description from the spec, or {@code null}
      */
-    public ParameterInfo(String originalName, String safeName, String balType, String location) {
+    public ParameterInfo(String originalName, String safeName, String balType, String location,
+                         String description) {
         this.originalName = originalName;
         this.safeName = safeName;
         this.balType = balType;
         this.location = location;
+        this.description = description;
     }
 
     public String getOriginalName() { return originalName; }
     public String getSafeName() { return safeName; }
     public String getBalType() { return balType; }
     public String getLocation() { return location; }
+    /** Parameter description from the spec, or {@code null} if it has none. */
+    public String getDescription() { return description; }
 
     /** Returns the function argument declaration: e.g. {@code "int petId"}. */
     public String toArgDeclaration() {
