@@ -2,7 +2,7 @@ import ballerina/log;
 import ballerina/mcp.v2 as mcpv2;
 import ballerina/http;
 
-http:Client apiClient = check new ("{{BASE_URL}}");
+final http:Client apiClient = check new ("{{BASE_URL}}");
 listener mcpv2:StreamableHttpListener mcpListener = check new ({{PORT}});
 
 @mcpv2:StreamableHttpServiceConfig {

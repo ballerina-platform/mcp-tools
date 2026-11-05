@@ -2,7 +2,7 @@ import ballerina/log;
 import ballerina/mcp.v2 as mcpv2;
 import ballerina/http;
 
-http:Client apiClient = check new ("http://localhost:9096");
+final http:Client apiClient = check new ("http://localhost:9096");
 listener mcpv2:StreamableHttpListener mcpListener = check new (9090);
 
 @mcpv2:StreamableHttpServiceConfig {
@@ -13,10 +13,12 @@ listener mcpv2:StreamableHttpListener mcpListener = check new (9090);
 }
 service mcpv2:StreamableHttpService /ref_query_params_api on mcpListener {
 
-    @mcpv2:Tool {
-        description: "Executes GET on /pets"
-    }
-    remote function listPetsWithRefParams(int 'limit, int offset) returns json|error {
+    # Executes GET on /pets
+    #
+    # + 'limit -
+    # + offset -
+    # + return - The API response, or an error if the request fails
+    isolated remote function listPetsWithRefParams(int 'limit, int offset) returns json|error {
         log:printInfo("Proxying request to: " + string `/pets?limit=${'limit}&offset=${offset}`);
         json response = check apiClient->get(string `/pets?limit=${'limit}&offset=${offset}`);
         return response;

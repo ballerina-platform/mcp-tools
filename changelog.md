@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Generate MCP servers with the `ballerina/mcp.v2` module (`import ballerina/mcp.v2 as mcpv2;`) and pin `ballerina/mcp` 1.5.0 in the generated `Ballerina.toml`
 - Require Ballerina Swan Lake Update 14 (2201.14.0) or later, for both the tool and the generated projects
+- Describe each tool with a doc comment instead of the `@mcpv2:Tool` annotation, and document its arguments from the OpenAPI parameter and request body descriptions, so MCP clients see them in the tool's input schema
+- Generate `isolated` tool functions and a `final` HTTP client
 
 ## [1.1.0] - 2026-09-18
 

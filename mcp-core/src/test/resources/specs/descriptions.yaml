@@ -1,0 +1,57 @@
+openapi: "3.0.3"
+info:
+  title: Descriptions API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:9094
+paths:
+  /items/{itemId}:
+    get:
+      operationId: getItem
+      summary: Get an item
+      description: Ignored, because the summary takes precedence.
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          description: ID of the item, matching ^\d+$
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          description: |
+            Maximum number of
+            entries to return
+          schema:
+            type: integer
+        - name: verbose
+          in: query
+          required: true
+          schema:
+            type: boolean
+  /items:
+    post:
+      operationId: createItem
+      summary: "   "
+      description: |
+        Creates an item.
+
+        Rules:
+        + names must be unique
+        +1 for short names
+        Names match ^[a-z]\w*$, and "C:\temp" style paths are kept as written.
+      requestBody:
+        description: The item to create
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
