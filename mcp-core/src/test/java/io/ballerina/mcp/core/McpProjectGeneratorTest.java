@@ -198,6 +198,7 @@ public class McpProjectGeneratorTest {
         DiagnosticResult modifierDiagnostics = project.currentPackage().runCodeGenAndModifyPlugins();
         modifierDiagnostics.diagnostics().forEach(d -> System.out.println(d.toString()));
         Assert.assertFalse(modifierDiagnostics.hasErrors(), "Compiler plugins should run without errors.");
+        Assert.assertFalse(modifierDiagnostics.hasWarnings(), "Compiler plugins should run without warnings.");
         PackageCompilation compilation = project.currentPackage().getCompilation();
         DiagnosticResult diagnostics = compilation.diagnosticResult();
         diagnostics.diagnostics().forEach(d ->
