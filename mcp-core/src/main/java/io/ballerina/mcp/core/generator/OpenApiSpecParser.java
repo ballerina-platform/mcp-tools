@@ -181,8 +181,8 @@ public class OpenApiSpecParser {
             toolName = buildToolName(method, path);
         }
 
-        String description = operation.getSummary() != null ? operation.getSummary()
-                : operation.getDescription() != null ? operation.getDescription()
+        String description = !isBlank(operation.getSummary()) ? operation.getSummary()
+                : !isBlank(operation.getDescription()) ? operation.getDescription()
                 : "Executes " + method.toUpperCase() + " on " + path;
 
         Map<String, Parameter> mergedParams = new LinkedHashMap<>();
@@ -213,19 +213,21 @@ public class OpenApiSpecParser {
                 String safeName = deduplicateSafeName(
                         GeneratorUtils.getValidName(param.getName(), false), usedNames);
                 parameters.add(new ParameterInfo(param.getName(), safeName, balType,
-                        Constants.PARAM_IN_PATH));
+                        Constants.PARAM_IN_PATH, param.getDescription()));
             } else if (Constants.PARAM_IN_QUERY.equals(param.getIn())) {
                 String balType = schemaToBalType(param.getSchema());
                 String safeName = deduplicateSafeName(
                         GeneratorUtils.getValidName(param.getName(), false), usedNames);
                 queryParameters.add(new ParameterInfo(param.getName(), safeName, balType,
-                        Constants.PARAM_IN_QUERY));
+                        Constants.PARAM_IN_QUERY, param.getDescription()));
             }
         }
 
         String bodyType = null;
+        String bodyDescription = null;
         if (operation.getRequestBody() != null) {
             bodyType = extractRequestBodyType(operation.getRequestBody());
+            bodyDescription = operation.getRequestBody().getDescription();
         }
 
         String returnType = extractReturnType(operation);
@@ -233,7 +235,7 @@ public class OpenApiSpecParser {
 
         endpoints.add(new EndpointInfo(
             path, balPath, method, toolName, description,
-            parameters, queryParameters, bodyType, returnType));
+            parameters, queryParameters, bodyType, bodyDescription, returnType));
     }
 
     private Parameter resolveParameter(Parameter param, OpenAPI openAPI) {
@@ -396,5 +398,9 @@ public class OpenApiSpecParser {
         }
         String name = sb.toString().replaceAll("[^a-zA-Z0-9_]", "");
         return name.isEmpty() ? Constants.DEFAULT_TOOL_NAME : GeneratorUtils.escapeIdentifier(name);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

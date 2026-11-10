@@ -33,6 +33,7 @@ public class MainBalGenerator {
 
     private static final String NL = "\n";
     private static final String INDENT = "    ";
+    private static final String RETURN_DOC = "The API response, or an error if the request fails";
 
     /**
      * Generates the full content of {@code main.bal}.
@@ -90,12 +91,9 @@ public class MainBalGenerator {
     private void appendRemoteFunction(StringBuilder sb, EndpointInfo endpoint) {
         sb.append(NL);
 
-        sb.append(INDENT).append("@mcp:Tool {").append(NL);
-        sb.append(INDENT).append(INDENT).append("description: \"")
-                .append(escapeString(endpoint.getDescription())).append("\"").append(NL);
-        sb.append(INDENT).append("}").append(NL);
+        appendDocComment(sb, endpoint);
 
-        sb.append(INDENT).append("remote function ").append(endpoint.getToolName()).append("(");
+        sb.append(INDENT).append("isolated remote function ").append(endpoint.getToolName()).append("(");
         sb.append(buildArgList(endpoint));
         sb.append(") returns ").append(endpoint.getReturnType()).append("|error {").append(NL);
 
@@ -121,6 +119,59 @@ public class MainBalGenerator {
         sb.append(");").append(NL);
         sb.append(INDENT).append(INDENT).append("return response;").append(NL);
         sb.append(INDENT).append("}").append(NL);
+    }
+
+    /**
+     * Writes the tool's doc comment. The mcp.v2 compiler plugin publishes the description as the tool
+     * description and each {@code + name - text} line as that argument's description in the input schema.
+     * Every argument and the return value get a line, even an empty one, so the build reports no
+     * undocumented-parameter warnings.
+     */
+    private void appendDocComment(StringBuilder sb, EndpointInfo endpoint) {
+        for (String line : endpoint.getDescription().strip().split("\\R", -1)) {
+            appendDocLine(sb, escapeDocLine(line.stripTrailing()));
+        }
+        appendDocLine(sb, "");
+        for (ParameterInfo param : endpoint.getParameters()) {
+            appendParamDoc(sb, param.getSafeName(), param.getDescription());
+        }
+        for (ParameterInfo param : endpoint.getQueryParameters()) {
+            appendParamDoc(sb, param.getSafeName(), param.getDescription());
+        }
+        if (endpoint.hasBody()) {
+            appendParamDoc(sb, "payload", endpoint.getBodyDescription());
+        }
+        appendParamDoc(sb, "return", RETURN_DOC);
+    }
+
+    private void appendParamDoc(StringBuilder sb, String name, String description) {
+        String text = description == null ? "" : description.strip().replaceAll("\\s+", " ");
+        appendDocLine(sb, text.isEmpty() ? "+ " + name + " -" : "+ " + name + " - " + text);
+    }
+
+    private void appendDocLine(StringBuilder sb, String text) {
+        sb.append(INDENT).append("#");
+        if (!text.isEmpty()) {
+            sb.append(" ").append(text);
+        }
+        sb.append(NL);
+    }
+
+    /**
+     * Ballerina reads any doc line that starts with {@code +} as a parameter doc, which would end the
+     * description early. A {@code + } list bullet becomes the equivalent {@code - } bullet; any other leading
+     * {@code +} gets a no-break space in front, which the doc parser treats as text.
+     */
+    private String escapeDocLine(String line) {
+        String trimmed = line.stripLeading();
+        if (!trimmed.startsWith("+")) {
+            return line;
+        }
+        String indent = line.substring(0, line.length() - trimmed.length());
+        if (trimmed.length() == 1 || Character.isWhitespace(trimmed.charAt(1))) {
+            return indent + "-" + trimmed.substring(1);
+        }
+        return indent + "\u00A0" + trimmed;
     }
 
     private String buildArgList(EndpointInfo endpoint) {

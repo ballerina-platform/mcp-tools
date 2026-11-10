@@ -14,7 +14,7 @@ It provides a Ballerina MCP server that wraps the **{{TITLE}}** API (v{{VERSION}
 
 ## Prerequisites
 
-- [Ballerina Swan Lake](https://ballerina.io/downloads/)
+- [Ballerina Swan Lake](https://ballerina.io/downloads/) Update 14 (2201.14.0) or later, which the `ballerina/mcp.v2` module requires
 - The upstream API must be reachable at: `{{BASE_URL}}`
 
 ## Running the MCP Server
